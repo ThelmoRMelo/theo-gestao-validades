@@ -34,6 +34,9 @@
           var theme = localStorage.getItem('app_theme') || 'future';
           var root = document.documentElement;
 
+          // Expor tema para seletores CSS via data-attribute
+          root.dataset.theme = theme;
+
           // Remover qualquer classe theme-* existente sem sobrescrever outras classes do <html>
           var classes = root.className ? root.className.split(/\s+/) : [];
           var kept = [];
@@ -45,6 +48,27 @@
           if (theme && theme !== 'future') {
             root.classList.add('theme-' + theme);
           }
+
+          // Aplicar também no <body> assim que existir (PWA/Standalone costuma manter estilos no body)
+          document.addEventListener('DOMContentLoaded', function () {
+            try {
+              var body = document.body;
+              if (!body) return;
+              body.dataset.theme = theme;
+
+              // limpar theme-* do body
+              var bclasses = body.className ? body.className.split(/\s+/) : [];
+              var bkept = [];
+              for (var j = 0; j < bclasses.length; j++) {
+                if (bclasses[j].indexOf('theme-') !== 0) bkept.push(bclasses[j]);
+              }
+              body.className = bkept.join(' ').trim();
+
+              if (theme && theme !== 'future') {
+                body.classList.add('theme-' + theme);
+              }
+            } catch (e) {}
+          });
         } catch (e) {}
       })();
     </script>

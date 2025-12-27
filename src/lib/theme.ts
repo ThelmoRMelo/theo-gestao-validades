@@ -13,12 +13,22 @@ export function isValidTheme(themeId: string): themeId is ThemeId {
  */
 export function applyThemeClass(themeId: string) {
   const root = document.documentElement;
+  const body = document.body;
 
-  VALID_THEMES.forEach((t) => root.classList.remove(`theme-${t}`));
+  // Atualizar data-theme para seletores CSS
+  root.dataset.theme = themeId;
+  if (body) body.dataset.theme = themeId;
+
+  // Remover classes de tema anteriores
+  VALID_THEMES.forEach((t) => {
+    root.classList.remove(`theme-${t}`);
+    if (body) body.classList.remove(`theme-${t}`);
+  });
 
   // 'future' é o padrão (:root), então não adicionamos classe
   if (themeId !== "future" && isValidTheme(themeId)) {
     root.classList.add(`theme-${themeId}`);
+    if (body) body.classList.add(`theme-${themeId}`);
   }
 }
 
