@@ -96,7 +96,8 @@
   }
 
   /* ═══ TEMA OCEAN DEPTH ═══ */
-  .theme-ocean {
+  .theme-ocean,
+  [data-theme="ocean"] {
     --background: 210 60% 5%;
     --foreground: 200 100% 95%;
     --card: 210 50% 8%;
@@ -136,7 +137,8 @@
   }
 
   /* ═══ TEMA NEON NIGHTS ═══ */
-  .theme-neon {
+  .theme-neon,
+  [data-theme="neon"] {
     --background: 270 50% 5%;
     --foreground: 300 100% 95%;
     --card: 270 40% 8%;
@@ -176,7 +178,8 @@
   }
 
   /* ═══ TEMA EMERALD TECH ═══ */
-  .theme-emerald {
+  .theme-emerald,
+  [data-theme="emerald"] {
     --background: 160 50% 4%;
     --foreground: 145 100% 95%;
     --card: 160 40% 7%;
@@ -216,7 +219,8 @@
   }
 
   /* ═══ TEMA SUNSET WARM ═══ */
-  .theme-sunset {
+  .theme-sunset,
+  [data-theme="sunset"] {
     --background: 15 40% 6%;
     --foreground: 30 100% 95%;
     --card: 15 35% 9%;
