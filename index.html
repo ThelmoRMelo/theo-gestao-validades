@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>TG - Controle de Validades</title>
+    <meta name="description" content="Sistema de controle de validades de produtos para supermercados" />
+    <meta name="author" content="TG" />
+    <meta name="theme-color" content="hsl(222 47% 6%)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TG" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Ícones -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
+
+    <meta property="og:title" content="TG - Controle de Validades" />
+    <meta property="og:description" content="Sistema de controle de validades de produtos para supermercados" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/icon-512.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/icon-512.png" />
+
+    <!-- SCRIPT INLINE: Aplicar tema ANTES do React renderizar (evita FOUC) -->
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem('app_theme') || 'future';
+          var root = document.documentElement;
+
+          // Remover qualquer classe theme-* existente sem sobrescrever outras classes do <html>
+          var classes = root.className ? root.className.split(/\s+/) : [];
+          var kept = [];
+          for (var i = 0; i < classes.length; i++) {
+            if (classes[i].indexOf('theme-') !== 0) kept.push(classes[i]);
+          }
+          root.className = kept.join(' ').trim();
+
+          if (theme && theme !== 'future') {
+            root.classList.add('theme-' + theme);
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

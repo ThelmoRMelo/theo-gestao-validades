@@ -1,0 +1,489 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════
+   GESTÃO DE VALIDADES - DESIGN SYSTEM FUTURISTA
+   Tema: Future_Design (Padrão)
+═══════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* ═══ TEMA FUTURE_DESIGN (PADRÃO) ═══ */
+    --background: 222 47% 6%;
+    --foreground: 180 100% 95%;
+
+    --card: 222 47% 8%;
+    --card-foreground: 180 100% 95%;
+
+    --popover: 222 47% 10%;
+    --popover-foreground: 180 100% 95%;
+
+    --primary: 180 100% 50%;
+    --primary-foreground: 222 47% 6%;
+
+    --secondary: 222 30% 15%;
+    --secondary-foreground: 180 100% 85%;
+
+    --muted: 222 30% 12%;
+    --muted-foreground: 215 20% 55%;
+
+    --accent: 25 95% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 85% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 180 50% 20%;
+    --input: 222 30% 15%;
+    --ring: 180 100% 50%;
+
+    --radius: 1rem;
+
+    /* ═══ CORES CUSTOMIZADAS ═══ */
+    --cyan: 180 100% 50%;
+    --cyan-glow: 180 100% 70%;
+    --cyan-dark: 180 100% 30%;
+    
+    --orange: 25 95% 55%;
+    --orange-glow: 25 95% 70%;
+    
+    --coral: 0 85% 55%;
+    --coral-glow: 0 85% 70%;
+    
+    --green: 145 80% 45%;
+    --green-glow: 145 80% 60%;
+    
+    --yellow: 45 95% 55%;
+    --yellow-glow: 45 95% 70%;
+    
+    --purple: 270 80% 60%;
+    --purple-glow: 270 80% 75%;
+
+    /* ═══ GRADIENTES ═══ */
+    --gradient-dark: linear-gradient(180deg, hsl(222 47% 6%) 0%, hsl(222 47% 3%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(222 47% 10%) 0%, hsl(222 47% 6%) 100%);
+    --gradient-cyan: linear-gradient(135deg, hsl(180 100% 50%) 0%, hsl(180 100% 30%) 100%);
+    --gradient-orange: linear-gradient(135deg, hsl(25 95% 55%) 0%, hsl(25 95% 40%) 100%);
+    --gradient-header: linear-gradient(180deg, hsl(180 100% 50%) 0%, hsl(180 100% 40%) 100%);
+
+    /* ═══ SOMBRAS ═══ */
+    --shadow-glow-cyan: 0 0 20px hsl(180 100% 50% / 0.3);
+    --shadow-glow-orange: 0 0 20px hsl(25 95% 55% / 0.3);
+    --shadow-glow-coral: 0 0 20px hsl(0 85% 55% / 0.3);
+    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.4);
+
+    /* ═══ TIPOGRAFIA ═══ */
+    --font-display: 'Orbitron', sans-serif;
+    --font-body: 'Inter', sans-serif;
+
+    /* ═══ SIDEBAR (para compatibilidade) ═══ */
+    --sidebar-background: 222 47% 8%;
+    --sidebar-foreground: 180 100% 95%;
+    --sidebar-primary: 180 100% 50%;
+    --sidebar-primary-foreground: 222 47% 6%;
+    --sidebar-accent: 222 30% 15%;
+    --sidebar-accent-foreground: 180 100% 85%;
+    --sidebar-border: 180 50% 20%;
+    --sidebar-ring: 180 100% 50%;
+    /* ═══ GRADIENTES DINÂMICOS (BASE) ═══ */
+    --gradient-dark: linear-gradient(180deg, hsl(222 47% 6%) 0%, hsl(222 47% 3%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(222 47% 10%) 0%, hsl(222 47% 6%) 100%);
+    --gradient-header: linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+    --gradient-header-critical: linear-gradient(135deg, hsl(var(--destructive)) 0%, hsl(var(--coral)) 100%);
+  }
+
+  /* ═══ TEMA OCEAN DEPTH ═══ */
+  .theme-ocean {
+    --background: 210 60% 5%;
+    --foreground: 200 100% 95%;
+    --card: 210 50% 8%;
+    --card-foreground: 200 100% 95%;
+    --popover: 210 50% 10%;
+    --popover-foreground: 200 100% 95%;
+    --primary: 200 100% 55%;
+    --primary-foreground: 210 60% 5%;
+    --secondary: 210 40% 15%;
+    --secondary-foreground: 200 100% 85%;
+    --muted: 210 40% 12%;
+    --muted-foreground: 210 30% 55%;
+    --accent: 170 100% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 85% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 200 50% 25%;
+    --input: 210 40% 15%;
+    --ring: 200 100% 55%;
+    --cyan: 200 100% 55%;
+    --cyan-glow: 200 100% 70%;
+    --cyan-dark: 200 100% 35%;
+    --orange: 170 100% 45%;
+    --orange-glow: 170 100% 60%;
+    --coral: 0 85% 55%;
+    --coral-glow: 0 85% 70%;
+    --green: 145 80% 45%;
+    --green-glow: 145 80% 60%;
+    --yellow: 45 95% 55%;
+    --yellow-glow: 45 95% 70%;
+    --purple: 270 80% 60%;
+    --purple-glow: 270 80% 75%;
+    --gradient-dark: linear-gradient(180deg, hsl(210 60% 5%) 0%, hsl(210 60% 2%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(210 50% 10%) 0%, hsl(210 50% 6%) 100%);
+    --gradient-header: linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+    --gradient-header-critical: linear-gradient(135deg, hsl(var(--destructive)) 0%, hsl(var(--coral)) 100%);
+  }
+
+  /* ═══ TEMA NEON NIGHTS ═══ */
+  .theme-neon {
+    --background: 270 50% 5%;
+    --foreground: 300 100% 95%;
+    --card: 270 40% 8%;
+    --card-foreground: 300 100% 95%;
+    --popover: 270 40% 10%;
+    --popover-foreground: 300 100% 95%;
+    --primary: 320 100% 60%;
+    --primary-foreground: 270 50% 5%;
+    --secondary: 270 40% 15%;
+    --secondary-foreground: 320 100% 85%;
+    --muted: 270 40% 12%;
+    --muted-foreground: 270 30% 55%;
+    --accent: 45 100% 55%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 85% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 320 50% 30%;
+    --input: 270 40% 15%;
+    --ring: 320 100% 60%;
+    --cyan: 320 100% 60%;
+    --cyan-glow: 320 100% 75%;
+    --cyan-dark: 320 100% 40%;
+    --orange: 45 100% 55%;
+    --orange-glow: 45 100% 70%;
+    --coral: 0 85% 55%;
+    --coral-glow: 0 85% 70%;
+    --green: 145 80% 45%;
+    --green-glow: 145 80% 60%;
+    --yellow: 45 95% 55%;
+    --yellow-glow: 45 95% 70%;
+    --purple: 270 80% 60%;
+    --purple-glow: 270 80% 75%;
+    --gradient-dark: linear-gradient(180deg, hsl(270 50% 5%) 0%, hsl(270 50% 2%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(270 40% 10%) 0%, hsl(270 40% 6%) 100%);
+    --gradient-header: linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+    --gradient-header-critical: linear-gradient(135deg, hsl(var(--destructive)) 0%, hsl(var(--coral)) 100%);
+  }
+
+  /* ═══ TEMA EMERALD TECH ═══ */
+  .theme-emerald {
+    --background: 160 50% 4%;
+    --foreground: 145 100% 95%;
+    --card: 160 40% 7%;
+    --card-foreground: 145 100% 95%;
+    --popover: 160 40% 9%;
+    --popover-foreground: 145 100% 95%;
+    --primary: 145 80% 50%;
+    --primary-foreground: 160 50% 4%;
+    --secondary: 160 40% 12%;
+    --secondary-foreground: 145 80% 80%;
+    --muted: 160 40% 10%;
+    --muted-foreground: 160 30% 55%;
+    --accent: 25 95% 55%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 85% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 145 50% 25%;
+    --input: 160 40% 12%;
+    --ring: 145 80% 50%;
+    --cyan: 145 80% 50%;
+    --cyan-glow: 145 80% 65%;
+    --cyan-dark: 145 80% 30%;
+    --orange: 25 95% 55%;
+    --orange-glow: 25 95% 70%;
+    --coral: 0 85% 55%;
+    --coral-glow: 0 85% 70%;
+    --green: 145 80% 45%;
+    --green-glow: 145 80% 60%;
+    --yellow: 45 95% 55%;
+    --yellow-glow: 45 95% 70%;
+    --purple: 270 80% 60%;
+    --purple-glow: 270 80% 75%;
+    --gradient-dark: linear-gradient(180deg, hsl(160 50% 4%) 0%, hsl(160 50% 2%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(160 40% 9%) 0%, hsl(160 40% 5%) 100%);
+    --gradient-header: linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+    --gradient-header-critical: linear-gradient(135deg, hsl(var(--destructive)) 0%, hsl(var(--coral)) 100%);
+  }
+
+  /* ═══ TEMA SUNSET WARM ═══ */
+  .theme-sunset {
+    --background: 15 40% 6%;
+    --foreground: 30 100% 95%;
+    --card: 15 35% 9%;
+    --card-foreground: 30 100% 95%;
+    --popover: 15 35% 11%;
+    --popover-foreground: 30 100% 95%;
+    --primary: 25 100% 55%;
+    --primary-foreground: 15 40% 6%;
+    --secondary: 15 35% 15%;
+    --secondary-foreground: 25 100% 85%;
+    --muted: 15 35% 12%;
+    --muted-foreground: 15 25% 55%;
+    --accent: 45 100% 55%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 85% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 25 50% 30%;
+    --input: 15 35% 15%;
+    --ring: 25 100% 55%;
+    --cyan: 25 100% 55%;
+    --cyan-glow: 25 100% 70%;
+    --cyan-dark: 25 100% 35%;
+    --orange: 45 100% 55%;
+    --orange-glow: 45 100% 70%;
+    --coral: 0 85% 55%;
+    --coral-glow: 0 85% 70%;
+    --green: 145 80% 45%;
+    --green-glow: 145 80% 60%;
+    --yellow: 45 95% 55%;
+    --yellow-glow: 45 95% 70%;
+    --purple: 270 80% 60%;
+    --purple-glow: 270 80% 75%;
+    --gradient-dark: linear-gradient(180deg, hsl(15 40% 6%) 0%, hsl(15 40% 3%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(15 35% 11%) 0%, hsl(15 35% 7%) 100%);
+    --gradient-header: linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+    --gradient-header-critical: linear-gradient(135deg, hsl(var(--destructive)) 0%, hsl(var(--coral)) 100%);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: var(--font-body);
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background: var(--gradient-dark);
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer components {
+  /* ═══ CARD COM GLASSMORPHISM ═══ */
+  .glass-card {
+    @apply relative overflow-hidden rounded-2xl;
+    background: linear-gradient(145deg, 
+      hsl(var(--card) / 0.8) 0%, 
+      hsl(var(--card) / 0.4) 100%
+    );
+    backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--border) / 0.3);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* ═══ CARD COM BORDA GRADIENTE ═══ */
+  .gradient-border-card {
+    @apply relative overflow-hidden rounded-2xl p-[1px];
+    background: linear-gradient(145deg, 
+      hsl(var(--cyan) / 0.6) 0%, 
+      hsl(var(--cyan) / 0.1) 50%,
+      hsl(var(--cyan) / 0.3) 100%
+    );
+  }
+
+  .gradient-border-card-inner {
+    @apply h-full w-full rounded-2xl p-4;
+    background: var(--gradient-card);
+  }
+
+  /* ═══ CARD STAT (PARA CONTADORES) ═══ */
+  .stat-card {
+    @apply gradient-border-card cursor-pointer transition-all duration-300;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-glow-cyan);
+  }
+
+  .stat-card.critical {
+    background: linear-gradient(145deg, 
+      hsl(var(--coral) / 0.6) 0%, 
+      hsl(var(--coral) / 0.1) 50%,
+      hsl(var(--coral) / 0.3) 100%
+    );
+  }
+
+  .stat-card.critical:hover {
+    box-shadow: var(--shadow-glow-coral);
+  }
+
+  /* ═══ CARD DE AÇÃO ═══ */
+  .action-card {
+    @apply gradient-border-card flex flex-col items-center justify-center gap-4 
+           min-h-[160px] cursor-pointer transition-all duration-300;
+  }
+
+  .action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-glow-cyan);
+  }
+
+  .action-card .icon-circle {
+    @apply flex items-center justify-center w-20 h-20 rounded-full;
+    border: 2px solid hsl(var(--cyan));
+    transition: all 0.3s ease;
+  }
+
+  .action-card:hover .icon-circle {
+    box-shadow: var(--shadow-glow-cyan);
+    border-color: hsl(var(--cyan-glow));
+  }
+
+  .action-card.orange .icon-circle {
+    border-color: hsl(var(--orange));
+  }
+
+  .action-card.orange:hover .icon-circle {
+    box-shadow: var(--shadow-glow-orange);
+    border-color: hsl(var(--orange-glow));
+  }
+
+  .action-card.yellow .icon-circle {
+    border-color: hsl(var(--yellow));
+  }
+
+  .action-card.green .icon-circle {
+    border-color: hsl(var(--green));
+  }
+
+  /* ═══ HEADER GRADIENTE ═══ */
+  .header-gradient {
+    @apply py-6 px-4;
+    background: var(--gradient-header);
+  }
+
+  /* ═══ BOTÃO PRIMÁRIO NEON ═══ */
+  .btn-neon {
+    @apply px-6 py-3 rounded-xl font-semibold transition-all duration-300;
+    background: hsl(var(--cyan));
+    color: hsl(var(--primary-foreground));
+    box-shadow: var(--shadow-glow-cyan);
+  }
+
+  .btn-neon:hover {
+    background: hsl(var(--cyan-glow));
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px hsl(var(--cyan) / 0.5);
+  }
+
+  .btn-neon:active {
+    transform: translateY(0);
+  }
+
+  /* ═══ BOTÃO SECUNDÁRIO ═══ */
+  .btn-secondary {
+    @apply px-6 py-3 rounded-xl font-semibold transition-all duration-300;
+    background: hsl(var(--orange));
+    color: hsl(var(--accent-foreground));
+    box-shadow: var(--shadow-glow-orange);
+  }
+
+  .btn-secondary:hover {
+    background: hsl(var(--orange-glow));
+    transform: translateY(-2px);
+  }
+
+  /* ═══ INPUT FUTURISTA ═══ */
+  .input-futuristic {
+    @apply w-full px-4 py-3 rounded-xl transition-all duration-300;
+    background: hsl(var(--input));
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+  }
+
+  .input-futuristic:focus {
+    outline: none;
+    border-color: hsl(var(--cyan));
+    box-shadow: var(--shadow-glow-cyan);
+  }
+
+  .input-futuristic::placeholder {
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* ═══ ANIMAÇÕES ═══ */
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 10px hsl(var(--cyan) / 0.3); }
+    50% { box-shadow: 0 0 25px hsl(var(--cyan) / 0.6); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      hsl(var(--cyan) / 0.1) 50%, 
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* ═══ SCROLLBAR CUSTOMIZADA ═══ */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--cyan) / 0.5);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--cyan));
+  }
+
+  /* ═══ SELEÇÃO DE TEXTO ═══ */
+  ::selection {
+    background: hsl(var(--cyan) / 0.3);
+    color: hsl(var(--foreground));
+  }
+}
+
+/* ═══ ESTILOS PARA PWA ═══ */
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
