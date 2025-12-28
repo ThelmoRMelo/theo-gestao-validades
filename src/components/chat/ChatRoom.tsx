@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, MessageCircle, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Send, MessageCircle, Wifi, WifiOff, Bell, BellOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,12 @@ import MessageBubble from './MessageBubble';
 import ChatSecretMenu from './ChatSecretMenu';
 import * as chatDb from '@/lib/chatDb';
 import * as chatSync from '@/lib/chatSync';
+import { 
+  requestChatNotificationPermission, 
+  playMessageSound,
+  getChatNotificationSettings,
+  saveChatNotificationSettings
+} from '@/lib/chatNotifications';
 import type { ChatMessage, ChatConversation } from '@/lib/chatDb';
 
 interface ChatRoomProps {
@@ -26,12 +32,14 @@ const ChatRoom = ({ conversationId, conversationType, title, onBack }: ChatRoomP
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [showSecretMenu, setShowSecretMenu] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(getChatNotificationSettings().soundEnabled);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Para ativar menu secreto
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const tapCount = useRef(0);
   const tapTimer = useRef<NodeJS.Timeout | null>(null);
+  const currentUserId = user?.cloud_user_id || user?.local_user_id;
 
   const loadMessages = useCallback(async () => {
     const msgs = await chatDb.getMessages(conversationId, 200);
@@ -40,6 +48,9 @@ const ChatRoom = ({ conversationId, conversationType, title, onBack }: ChatRoomP
 
   useEffect(() => {
     loadMessages();
+    
+    // Solicitar permissão de notificação
+    requestChatNotificationPermission();
 
     // Subscribe to realtime updates
     const unsubscribe = chatSync.subscribeToChatRealtime(
@@ -47,6 +58,10 @@ const ChatRoom = ({ conversationId, conversationType, title, onBack }: ChatRoomP
       (newMsg) => {
         setMessages(prev => {
           if (prev.some(m => m.id === newMsg.id)) return prev;
+          // Tocar som se não for mensagem própria
+          if (newMsg.user_id !== currentUserId) {
+            playMessageSound();
+          }
           return [...prev, newMsg];
         });
       },
@@ -58,7 +73,7 @@ const ChatRoom = ({ conversationId, conversationType, title, onBack }: ChatRoomP
     );
 
     return unsubscribe;
-  }, [conversationId, loadMessages]);
+  }, [conversationId, loadMessages, currentUserId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -76,9 +91,11 @@ const ChatRoom = ({ conversationId, conversationType, title, onBack }: ChatRoomP
     setNewMessage('');
 
     try {
+      // Usar cloud_user_id se disponível (para FK), senão local_user_id como fallback
+      const userId = user.cloud_user_id || user.local_user_id;
       const msg = await chatSync.sendChatMessage(
         conversationId,
-        user.local_user_id,
+        userId,
         user.name,
         messageText
       );
@@ -96,7 +113,8 @@ const ChatRoom = ({ conversationId, conversationType, title, onBack }: ChatRoomP
   };
 
   const handleReaction = async (messageId: string, emoji: string) => {
-    await chatSync.addReaction(messageId, emoji, user?.local_user_id || '');
+    const userId = user?.cloud_user_id || user?.local_user_id || '';
+    await chatSync.addReaction(messageId, emoji, userId);
     await loadMessages();
   };
 
@@ -152,6 +170,13 @@ const ChatRoom = ({ conversationId, conversationType, title, onBack }: ChatRoomP
     await chatSync.forceResync(conversationId);
     await loadMessages();
     toast.success('Conversa ressincronizada');
+  };
+
+  const toggleSound = () => {
+    const newValue = !soundEnabled;
+    setSoundEnabled(newValue);
+    saveChatNotificationSettings({ soundEnabled: newValue });
+    toast.success(newValue ? 'Som ativado' : 'Som desativado');
   };
 
   const formatDate = (dateStr: string) => {
@@ -211,6 +236,17 @@ const ChatRoom = ({ conversationId, conversationType, title, onBack }: ChatRoomP
             )}
           </p>
         </div>
+        <button
+          onClick={toggleSound}
+          className="w-10 h-10 rounded-xl bg-primary-foreground/20 flex items-center justify-center"
+          title={soundEnabled ? 'Desativar som' : 'Ativar som'}
+        >
+          {soundEnabled ? (
+            <Bell className="w-5 h-5 text-primary-foreground" />
+          ) : (
+            <BellOff className="w-5 h-5 text-primary-foreground/50" />
+          )}
+        </button>
       </header>
 
       {/* Messages */}
@@ -228,10 +264,10 @@ const ChatRoom = ({ conversationId, conversationType, title, onBack }: ChatRoomP
                 <MessageBubble
                   key={msg.id}
                   message={msg}
-                  isOwn={msg.user_id === user?.local_user_id}
+                  isOwn={msg.user_id === (user?.cloud_user_id || user?.local_user_id)}
                   onReaction={handleReaction}
                   onDelete={handleDeleteMessage}
-                  canDelete={msg.user_id === user?.local_user_id}
+                  canDelete={msg.user_id === (user?.cloud_user_id || user?.local_user_id)}
                 />
               ))}
             </div>
