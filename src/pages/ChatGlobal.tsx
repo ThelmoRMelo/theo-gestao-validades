@@ -5,11 +5,14 @@ import ChatRoom from '@/components/chat/ChatRoom';
 import UserSelect from '@/components/chat/UserSelect';
 import { GLOBAL_CONVERSATION_ID } from '@/lib/chatDb';
 import * as chatSync from '@/lib/chatSync';
+import { setLastReadGlobalTimestamp } from '@/lib/chatNotifications';
+import { useApp } from '@/contexts/AppContext';
 
 type View = 'list' | 'room' | 'select-user';
 
 const ChatGlobal = () => {
   const navigate = useNavigate();
+  const { user } = useApp();
   const [view, setView] = useState<View>('list');
   const [currentConversation, setCurrentConversation] = useState<{
     id: string;
@@ -25,6 +28,10 @@ const ChatGlobal = () => {
   const handleSelectConversation = (id: string, type: 'global' | 'private', title: string) => {
     setCurrentConversation({ id, type, title });
     setView('room');
+    // Marcar como lido ao entrar no chat global
+    if (id === GLOBAL_CONVERSATION_ID) {
+      setLastReadGlobalTimestamp(new Date().toISOString());
+    }
   };
 
   const handleCreatePrivate = () => {

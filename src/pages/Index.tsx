@@ -29,6 +29,7 @@ import { Users, Palette, Save, RefreshCw, Eye, EyeOff, Pencil } from 'lucide-rea
 import { supabase } from '@/integrations/supabase/client';
 import { updateAppIdentity } from '@/lib/sync';
 import { toast } from 'sonner';
+import { useChatUnread } from '@/hooks/useChatUnread';
 
 const ADMIN_USER = 'Administrador';
 const ADMIN_PASS = 'ADM102030';
@@ -49,6 +50,9 @@ const Index = () => {
   const navigate = useNavigate();
   const { user, activeLotsCount, criticalLotsCount, isOnline, isSyncing, triggerSync } = useApp();
   const [appIdentity, setAppIdentity] = useState<AppIdentity | null>(null);
+  
+  // Chat unread count
+  const { unreadCount } = useChatUnread(user?.cloud_user_id || user?.local_user_id);
 
   // Secret admin menu state
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
@@ -258,10 +262,15 @@ const Index = () => {
             <span className="font-medium text-foreground">Configurações</span>
           </div>
         </div>
-        <div onClick={() => navigate('/chat')} className="action-card green">
+        <div onClick={() => navigate('/chat')} className="action-card green relative">
           <div className="gradient-border-card-inner flex flex-col items-center justify-center gap-3 min-h-[140px]">
-            <div className="icon-circle w-16 h-16 rounded-full border-2 border-green flex items-center justify-center">
+            <div className="icon-circle w-16 h-16 rounded-full border-2 border-green flex items-center justify-center relative">
               <MessageCircle className="w-8 h-8 text-green" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-coral text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </div>
             <span className="font-medium text-foreground">Chat Global</span>
           </div>
