@@ -237,7 +237,8 @@ const ValidadesCriticas = () => {
 
   const handleToggleStatus = async (lot: LoteComProduto) => {
     const newStatus = lot.status === 'active' ? 'disabled' : 'active';
-    await updateLotWithSync(lot.id, { status: newStatus });
+    await updateLotWithSync({ ...lot, status: newStatus });
+    toast.success(newStatus === 'active' ? 'Lote ativado' : 'Lote desativado');
     await loadLotes();
     await refreshCounts();
   };
