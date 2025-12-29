@@ -124,71 +124,62 @@ const ValidadesCriticas = () => {
     return sorted;
   };
 
+  // Preparar dados para exportação agrupados por setor
   const getExportDataBySector = (sortOption: ExportSortOption) => {
     const sortedLotes = sortLotes(lotes, sortOption);
-    const headers = ['Produto', 'Código', 'Qtd', 'Validade', 'Dias Rest.'];
+    const headers = ['Produto', 'Código', 'Quantidade', 'Validade', 'Dias', 'Urgência'];
     
     // Agrupar por setor
     const sectorMap = new Map<string, typeof sortedLotes>();
-    for (const lote of sortedLotes) {
+    sortedLotes.forEach(lote => {
       const sector = lote.produto?.sector || 'Geral';
       if (!sectorMap.has(sector)) {
         sectorMap.set(sector, []);
       }
       sectorMap.get(sector)!.push(lote);
-    }
+    });
+    
+    // Converter para array
+    const sectors: { sector: string; rows: string[][] }[] = [];
+    sectorMap.forEach((items, sector) => {
+      sectors.push({
+        sector,
+        rows: items.map(l => [
+          l.produto?.name || 'Produto não encontrado',
+          l.barcode,
+          l.quantity.toString(),
+          formatDate(l.expiration_date),
+          getDaysUntil(l.expiration_date).toString(),
+          getUrgencyLabel(getDaysUntil(l.expiration_date)),
+        ]),
+      });
+    });
     
     // Ordenar setores alfabeticamente
-    const sortedSectors = Array.from(sectorMap.keys()).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-    
-    const sectors = sortedSectors.map(sector => {
-      const sectorLotes = sectorMap.get(sector)!;
-      // Ordenar produtos dentro do setor por nome A-Z
-      sectorLotes.sort((a, b) => {
-        const nameA = a.produto?.name || '';
-        const nameB = b.produto?.name || '';
-        return nameA.localeCompare(nameB, 'pt-BR');
-      });
-      
-      return {
-        sector,
-        rows: sectorLotes.map(lote => {
-          const days = getDaysUntil(lote.expiration_date);
-          return [
-            lote.produto?.name || 'Desconhecido',
-            lote.barcode,
-            lote.quantity.toString(),
-            formatDate(lote.expiration_date),
-            days === 1 ? '1 dia' : days <= 0 ? `${days} dias` : `${days} dias`,
-          ];
-        }),
-      };
-    });
+    sectors.sort((a, b) => a.sector.localeCompare(b.sector, 'pt-BR'));
     
     return {
       headers,
       sectors,
-      title: 'Validades Críticas (Até 20 Dias)',
+      title: 'Validades Críticas',
       totalLotes: sortedLotes.length,
     };
   };
 
+  // Preparar dados para exportação simples (lista única)
   const getExportDataSimple = (sortOption: ExportSortOption) => {
     const sortedLotes = sortLotes(lotes, sortOption);
-    const headers = ['Produto', 'Código de Barras', 'Setor', 'Quantidade', 'Validade', 'Dias Restantes', 'Urgência'];
+    const headers = ['Produto', 'Código', 'Setor', 'Quantidade', 'Validade', 'Dias', 'Urgência'];
     
-    const rows = sortedLotes.map(lote => {
-      const days = getDaysUntil(lote.expiration_date);
-      return [
-        lote.produto?.name || 'Desconhecido',
-        lote.barcode,
-        lote.produto?.sector || 'Geral',
-        lote.quantity.toString(),
-        formatDate(lote.expiration_date),
-        days.toString(),
-        getUrgencyLabel(days),
-      ];
-    });
+    const rows = sortedLotes.map(l => [
+      l.produto?.name || 'Produto não encontrado',
+      l.barcode,
+      l.produto?.sector || 'Geral',
+      l.quantity.toString(),
+      formatDate(l.expiration_date),
+      getDaysUntil(l.expiration_date).toString(),
+      getUrgencyLabel(getDaysUntil(l.expiration_date)),
+    ]);
 
     const sortLabel = sortOption === 'date-asc' 
       ? ' (Validade Crescente)' 
@@ -201,97 +192,91 @@ const ValidadesCriticas = () => {
     };
   };
 
-  const handleExport = (format: 'excel' | 'pdf', sortOption: ExportSortOption) => {
-    const filename = `validades-criticas-${new Date().toISOString().split('T')[0]}`;
-    
-    if (sortOption === 'sector-az') {
-      // Exportação padrão do sistema com separação por setor
-      const data = getExportDataBySector(sortOption);
-      if (format === 'excel') {
-        exportToExcelBySector(data, filename);
+  const handleExport = async (format: 'excel' | 'pdf', sortOption: ExportSortOption) => {
+    try {
+      const filename = `validades-criticas-${new Date().toISOString().split('T')[0]}`;
+      
+      if (sortOption === 'sector-az') {
+        // Exportar agrupado por setor
+        const dataBySector = getExportDataBySector(sortOption);
+        
+        if (format === 'excel') {
+          exportToExcelBySector(dataBySector, filename);
+        } else {
+          exportToPDFBySector(dataBySector, filename);
+        }
       } else {
-        exportToPDFBySector(data, filename);
+        // Exportar lista simples
+        const data = getExportDataSimple(sortOption);
+        
+        if (format === 'excel') {
+          exportToExcel(data, filename);
+        } else {
+          exportToPDF(data, filename);
+        }
       }
-    } else {
-      // Exportação simples ordenada por validade
-      const data = getExportDataSimple(sortOption);
-      if (format === 'excel') {
-        exportToExcel(data, filename);
-      } else {
-        exportToPDF(data, filename);
-      }
+      
+      toast.success(`Exportado para ${format.toUpperCase()} com sucesso!`);
+    } catch (error) {
+      console.error('Erro ao exportar:', error);
+      toast.error('Erro ao exportar dados');
     }
   };
 
+  // Verificar permissão para editar lotes
   const canEditLot = (lot: LoteComProduto) => {
     if (!user) return false;
-    const isOwnLot =
-      lot.created_by === user.cloud_user_id ||
-      lot.created_by === user.local_user_id;
-    if (isOwnLot) return true;
-    return user.can_edit_others_lots;
+    return lot.created_by === user.local_user_id || user.can_edit_others_lots === true;
   };
 
+  // Verificar permissão para excluir lotes
   const canDeleteLot = (lot: LoteComProduto) => {
     if (!user) return false;
-    const isOwnLot =
-      lot.created_by === user.cloud_user_id ||
-      lot.created_by === user.local_user_id;
-    if (isOwnLot) return true;
-    return user.can_delete_lots;
+    return user.can_delete_lots === true;
   };
 
-  const handleToggleStatus = async (lote: LoteComProduto) => {
-    if (!canEditLot(lote)) {
-      toast.error('Você não tem permissão para alterar este lote');
-      return;
-    }
-    const newStatus = lote.status === 'active' ? 'disabled' : 'active';
-    await updateLotWithSync({ ...lote, status: newStatus });
-    toast.success(newStatus === 'active' ? 'Lote ativado' : 'Lote desativado');
+  const handleToggleStatus = async (lot: LoteComProduto) => {
+    const newStatus = lot.status === 'active' ? 'disabled' : 'active';
+    await updateLotWithSync(lot.id, { status: newStatus });
+    await loadLotes();
     await refreshCounts();
-    loadLotes();
   };
 
-  const handleEdit = (lote: LoteComProduto) => {
-    if (!canEditLot(lote)) {
-      toast.error('Você não tem permissão para editar este lote');
-      return;
-    }
-    setEditingLot(lote);
+  const handleEdit = (lot: LoteComProduto) => {
+    setEditingLot(lot);
   };
 
-  const handleDeleteClick = (lote: LoteComProduto, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!canDeleteLot(lote)) {
-      toast.error('Você não tem permissão para excluir este lote');
-      return;
-    }
-    setLoteToDelete(lote);
+  const handleDeleteClick = (lot: LoteComProduto) => {
+    setLoteToDelete(lot);
     setDeleteDialogOpen(true);
   };
 
   const confirmDelete = async () => {
-    if (loteToDelete) {
+    if (!loteToDelete) return;
+    
+    try {
       await deleteLotWithSync(loteToDelete.id);
-      toast.success('Lote excluído com sucesso');
+      toast.success('Lote excluído com sucesso!');
+      await loadLotes();
       await refreshCounts();
-      loadLotes();
+    } catch (error) {
+      console.error('Erro ao excluir lote:', error);
+      toast.error('Erro ao excluir lote');
+    } finally {
+      setDeleteDialogOpen(false);
+      setLoteToDelete(null);
     }
-    setDeleteDialogOpen(false);
-    setLoteToDelete(null);
   };
 
   const handleEditSave = async () => {
-    setEditingLot(null);
+    await loadLotes();
     await refreshCounts();
-    loadLotes();
   };
 
   return (
-    <div className="min-h-screen bg-background pb-8">
-      {/* Header - usando variável de tema */}
-      <header className="py-6 px-4 flex items-center justify-between mb-6" style={{ background: 'var(--gradient-header-critical)' }}>
+    <div className="h-screen flex flex-col bg-background">
+      {/* Header - Área Fixa */}
+      <header className="py-6 px-4 flex items-center justify-between flex-shrink-0" style={{ background: 'var(--gradient-header-critical)' }}>
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate('/')}
@@ -315,13 +300,16 @@ const ValidadesCriticas = () => {
         />
       </header>
 
-      <div className="px-4">
+      {/* Área Fixa: Resumo */}
+      <div className="flex-shrink-0 px-4 pt-4 pb-2 bg-background">
         {/* Card de Resumo */}
         {!isLoading && lotes.length > 0 && (
           <LotesSummaryCard lotes={lotes} variant="critical" />
         )}
+      </div>
 
-        {/* Grid de Lotes */}
+      {/* Área Scrollável: Lista de Lotes */}
+      <div className="flex-1 overflow-y-auto px-4 pb-8">
         <Card className="border-destructive/20">
           <CardHeader className="pb-3 border-b border-border">
             <CardTitle className="flex items-center gap-2 text-lg text-destructive">
