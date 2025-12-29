@@ -162,9 +162,9 @@ const ConsultarProdutos = () => {
   };
 
   return (
-    <div className="min-h-screen pb-8">
-      {/* Header */}
-      <header className="header-gradient flex items-center gap-4 mb-6">
+    <div className="h-screen flex flex-col bg-background">
+      {/* Header - Área Fixa */}
+      <header className="header-gradient flex items-center gap-4 flex-shrink-0">
         <button 
           onClick={() => navigate('/')}
           className="w-10 h-10 rounded-xl bg-primary-foreground/20 flex items-center justify-center"
@@ -181,7 +181,8 @@ const ConsultarProdutos = () => {
         </div>
       </header>
 
-      <div className="px-4 space-y-4">
+      {/* Área Fixa: Busca + Filtros */}
+      <div className="flex-shrink-0 px-4 pt-4 pb-2 bg-background space-y-4">
         {/* Busca */}
         <div className="glass-card p-4">
           <div className="flex gap-2">
@@ -275,8 +276,10 @@ const ConsultarProdutos = () => {
             </Label>
           </div>
         </div>
+      </div>
 
-        {/* Lista de Produtos */}
+      {/* Área Scrollável: Lista de Produtos */}
+      <div className="flex-1 overflow-y-auto px-4 pb-8">
         <div className="space-y-3">
           {isLoading ? (
             <div className="glass-card p-8 text-center">

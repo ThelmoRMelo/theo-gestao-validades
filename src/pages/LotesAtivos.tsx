@@ -298,9 +298,9 @@ const LotesAtivos = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-8">
-      {/* Header */}
-      <header className="header-gradient flex items-center justify-between mb-6">
+    <div className="h-screen flex flex-col bg-background">
+      {/* Header - Área Fixa */}
+      <header className="header-gradient flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate('/')}
@@ -320,14 +320,15 @@ const LotesAtivos = () => {
         <ExportDropdown onExport={handleExport} />
       </header>
 
-      <div className="px-4">
+      {/* Área Fixa: Resumo + Filtro */}
+      <div className="flex-shrink-0 px-4 pt-4 pb-2 bg-background space-y-4">
         {/* Card de Resumo */}
         {!isLoading && filteredLotes.length > 0 && (
           <LotesSummaryCard lotes={filteredLotes} variant="default" />
         )}
 
         {/* Dropdown de Filtro por Setor */}
-        <div className="mb-4">
+        <div>
           <div className="flex items-center gap-2 mb-2">
             <Filter className="w-4 h-4 text-muted-foreground" />
             <span className="text-sm font-medium text-foreground">Filtrar por Setor</span>
@@ -348,8 +349,10 @@ const LotesAtivos = () => {
             </SelectContent>
           </Select>
         </div>
+      </div>
 
-        {/* Grid de Lotes */}
+      {/* Área Scrollável: Lista de Lotes */}
+      <div className="flex-1 overflow-y-auto px-4 pb-8">
         <Card className="border-border">
           <CardHeader className="pb-3 border-b border-border">
             <CardTitle className="flex items-center gap-2 text-lg text-foreground">
