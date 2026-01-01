@@ -24,6 +24,9 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
+  MessageCircle,
+  Trash2,
+  Globe,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
@@ -74,11 +77,17 @@ export function SecretAdminMenu() {
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const [longPressTriggered, setLongPressTriggered] = useState(false);
   const lastClickTime = useRef<number>(0);
+  
+  // Chat management states
+  const [chatConversations, setChatConversations] = useState<{ id: string; type: string; created_at: string; message_count: number }[]>([]);
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
+  const [isDeletingChat, setIsDeletingChat] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
       loadUsers();
       loadAppIdentity();
+      loadChatConversations();
     }
   }, [isAuthenticated]);
 
@@ -245,6 +254,95 @@ export function SecretAdminMenu() {
     }
   };
 
+  // Chat management functions
+  const loadChatConversations = async () => {
+    if (!isOnline) return;
+    setIsLoadingChat(true);
+    try {
+      const { data: conversations, error } = await supabase
+        .from('chat_conversations')
+        .select('id, type, created_at')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Obter contagem de mensagens para cada conversa
+      const conversationsWithCount = await Promise.all(
+        (conversations || []).map(async (conv) => {
+          const { count } = await supabase
+            .from('chat_messages')
+            .select('id', { count: 'exact', head: true })
+            .eq('conversation_id', conv.id)
+            .eq('deleted', false);
+          
+          return {
+            ...conv,
+            message_count: count || 0
+          };
+        })
+      );
+
+      setChatConversations(conversationsWithCount);
+    } catch (error) {
+      console.error('Erro ao carregar conversas:', error);
+      toast.error('Erro ao carregar conversas do chat');
+    } finally {
+      setIsLoadingChat(false);
+    }
+  };
+
+  const handleDeleteChatHistory = async (conversationId: string) => {
+    if (!isOnline) {
+      toast.error('É necessário estar online para esta ação');
+      return;
+    }
+
+    setIsDeletingChat(conversationId);
+    try {
+      // Marcar todas as mensagens como deletadas (soft delete)
+      const { error } = await supabase
+        .from('chat_messages')
+        .update({ deleted: true })
+        .eq('conversation_id', conversationId);
+
+      if (error) throw error;
+
+      toast.success('Histórico de mensagens excluído com sucesso!');
+      await loadChatConversations();
+    } catch (error) {
+      console.error('Erro ao excluir histórico:', error);
+      toast.error('Erro ao excluir histórico de mensagens');
+    } finally {
+      setIsDeletingChat(null);
+    }
+  };
+
+  const handleDeleteAllChatHistory = async () => {
+    if (!isOnline) {
+      toast.error('É necessário estar online para esta ação');
+      return;
+    }
+
+    setIsDeletingChat('all');
+    try {
+      // Marcar todas as mensagens como deletadas
+      const { error } = await supabase
+        .from('chat_messages')
+        .update({ deleted: true })
+        .neq('deleted', true);
+
+      if (error) throw error;
+
+      toast.success('Todo o histórico de mensagens foi excluído!');
+      await loadChatConversations();
+    } catch (error) {
+      console.error('Erro ao excluir histórico:', error);
+      toast.error('Erro ao excluir histórico de mensagens');
+    } finally {
+      setIsDeletingChat(null);
+    }
+  };
+
   return (
     <>
       {/* Hidden trigger elements - these props are passed to parent */}
@@ -311,7 +409,7 @@ export function SecretAdminMenu() {
           </DialogHeader>
 
           <Tabs defaultValue="permissions" className="mt-4">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="permissions" className="flex items-center gap-1 text-xs">
                 <Users className="w-3 h-3" />
                 Permissões
@@ -323,6 +421,10 @@ export function SecretAdminMenu() {
               <TabsTrigger value="backup" className="flex items-center gap-1 text-xs">
                 <Database className="w-3 h-3" />
                 Backup
+              </TabsTrigger>
+              <TabsTrigger value="chat" className="flex items-center gap-1 text-xs">
+                <MessageCircle className="w-3 h-3" />
+                Chat
               </TabsTrigger>
             </TabsList>
 
@@ -592,6 +694,114 @@ export function SecretAdminMenu() {
                   </div>
                 )}
               </div>
+            </TabsContent>
+
+            {/* Chat Management Tab */}
+            <TabsContent value="chat" className="mt-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4" />
+                  Gerenciar Chat
+                </h3>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={loadChatConversations}
+                  disabled={!isOnline || isLoadingChat}
+                >
+                  <RefreshCw className={`w-4 h-4 ${isLoadingChat ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                Gerencie as conversas e histórico de mensagens do chat global e privado.
+              </p>
+
+              {!isOnline ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  É necessário estar online para gerenciar o chat
+                </div>
+              ) : isLoadingChat ? (
+                <div className="text-center py-8 text-muted-foreground animate-pulse">
+                  Carregando conversas...
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Botão para excluir todo o histórico */}
+                  <div className="border rounded-lg p-4 space-y-3 bg-destructive/10 border-destructive/30">
+                    <div className="flex items-center gap-2">
+                      <Trash2 className="w-5 h-5 text-destructive" />
+                      <h4 className="font-medium text-destructive">Excluir Todo o Histórico</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Remove todas as mensagens de todas as conversas (global e privadas).
+                      Esta ação não pode ser desfeita.
+                    </p>
+                    <Button 
+                      onClick={handleDeleteAllChatHistory}
+                      disabled={isDeletingChat === 'all'}
+                      className="w-full"
+                      variant="destructive"
+                    >
+                      {isDeletingChat === 'all' ? (
+                        <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <Trash2 className="w-4 h-4 mr-2" />
+                      )}
+                      {isDeletingChat === 'all' ? 'Excluindo...' : 'Excluir Todo o Histórico'}
+                    </Button>
+                  </div>
+
+                  {/* Lista de conversas */}
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                    {chatConversations.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Nenhuma conversa encontrada
+                      </div>
+                    ) : (
+                      chatConversations.map((conv) => (
+                        <div
+                          key={conv.id}
+                          className="border rounded-lg p-4 space-y-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {conv.type === 'global' ? (
+                                <Globe className="w-4 h-4 text-primary" />
+                              ) : (
+                                <MessageCircle className="w-4 h-4 text-accent" />
+                              )}
+                              <span className="font-medium">
+                                {conv.type === 'global' ? 'Chat Global' : 'Chat Privado'}
+                              </span>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {conv.message_count} mensagens
+                            </span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Criado em: {new Date(conv.created_at).toLocaleDateString('pt-BR')}
+                          </div>
+                          <Button
+                            onClick={() => handleDeleteChatHistory(conv.id)}
+                            disabled={isDeletingChat === conv.id}
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
+                          >
+                            {isDeletingChat === conv.id ? (
+                              <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                            ) : (
+                              <Trash2 className="w-4 h-4 mr-2" />
+                            )}
+                            {isDeletingChat === conv.id ? 'Excluindo...' : 'Excluir Histórico'}
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </DialogContent>
