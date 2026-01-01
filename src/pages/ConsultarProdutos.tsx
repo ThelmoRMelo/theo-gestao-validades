@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, Package, ChevronRight, Layers, ScanLine, Power, PowerOff, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Search, Package, ChevronRight, Layers, ScanLine, Power, PowerOff, Eye, EyeOff, List } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -27,6 +27,7 @@ const ConsultarProdutos = () => {
   const [selectedSector, setSelectedSector] = useState('Todos');
   const [showInactive, setShowInactive] = useState(false);
   const [showExpired, setShowExpired] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [produtos, setProdutos] = useState<ProdutoComLotes[]>([]);
   const [sectors, setSectors] = useState<Sector[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -129,13 +130,36 @@ const ConsultarProdutos = () => {
       produto.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       produto.barcode.includes(searchTerm);
     const matchesSector = selectedSector === 'Todos' || produto.sector === selectedSector;
-    const matchesActive = showInactive || produto.is_active !== false;
     
-    // Se showExpired está desativado, ocultar produtos que SÓ têm lotes vencidos
-    const hasValidLots = produto.nearestExpiration !== undefined || produto.activeLots === 0;
-    const matchesExpired = showExpired || !produto.hasExpiredLots || hasValidLots;
+    // Primeiro aplica busca e setor
+    if (!matchesSearch || !matchesSector) return false;
     
-    return matchesSearch && matchesSector && matchesActive && matchesExpired;
+    const isInactive = produto.is_active === false;
+    const isExpired = produto.hasExpiredLots && !produto.nearestExpiration; // Só tem lotes vencidos
+    const isActiveAndValid = produto.is_active !== false && (produto.nearestExpiration !== undefined || produto.activeLots === 0);
+    
+    // Toggle "Listar todos" sobrescreve os demais
+    if (showAll) {
+      return true;
+    }
+    
+    // Quando ambos toggles estão ativos: mostra inativos E vencidos (não mostra ativos válidos)
+    if (showInactive && showExpired) {
+      return isInactive || isExpired;
+    }
+    
+    // Toggle "Mostrar inativos": mostra SOMENTE inativos
+    if (showInactive) {
+      return isInactive;
+    }
+    
+    // Toggle "Listar vencidos": mostra SOMENTE produtos com lotes vencidos
+    if (showExpired) {
+      return produto.hasExpiredLots;
+    }
+    
+    // Padrão: mostra apenas produtos ativos e válidos
+    return isActiveAndValid;
   });
 
   const formatDate = (dateStr: string) => {
@@ -255,11 +279,15 @@ const ConsultarProdutos = () => {
               <Switch
                 id="show-inactive"
                 checked={showInactive}
-                onCheckedChange={setShowInactive}
+                onCheckedChange={(checked) => {
+                  setShowInactive(checked);
+                  if (checked) setShowAll(false);
+                }}
+                disabled={showAll}
               />
-              <Label htmlFor="show-inactive" className="text-sm text-muted-foreground flex items-center gap-1">
+              <Label htmlFor="show-inactive" className={`text-sm flex items-center gap-1 ${showAll ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>
                 {showInactive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                Mostrar produtos inativos
+                Somente produtos inativos
               </Label>
             </div>
           )}
@@ -268,11 +296,33 @@ const ConsultarProdutos = () => {
             <Switch
               id="show-expired"
               checked={showExpired}
-              onCheckedChange={setShowExpired}
+              onCheckedChange={(checked) => {
+                setShowExpired(checked);
+                if (checked) setShowAll(false);
+              }}
+              disabled={showAll}
             />
-            <Label htmlFor="show-expired" className="text-sm text-muted-foreground flex items-center gap-1">
+            <Label htmlFor="show-expired" className={`text-sm flex items-center gap-1 ${showAll ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>
               {showExpired ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-              Listar produtos vencidos
+              Somente produtos vencidos
+            </Label>
+          </div>
+
+          <div className="flex items-center gap-2 pt-1 border-t border-border">
+            <Switch
+              id="show-all"
+              checked={showAll}
+              onCheckedChange={(checked) => {
+                setShowAll(checked);
+                if (checked) {
+                  setShowInactive(false);
+                  setShowExpired(false);
+                }
+              }}
+            />
+            <Label htmlFor="show-all" className="text-sm text-muted-foreground flex items-center gap-1">
+              <List className="w-4 h-4" />
+              Listar todos os produtos
             </Label>
           </div>
         </div>
