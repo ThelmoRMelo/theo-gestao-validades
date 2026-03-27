@@ -74,7 +74,7 @@ export function SecretAdminMenu() {
   const [isImporting, setIsImporting] = useState(false);
   const [importReport, setImportReport] = useState<ImportReport | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [longPressTriggered, setLongPressTriggered] = useState(false);
   const lastClickTime = useRef<number>(0);
   
