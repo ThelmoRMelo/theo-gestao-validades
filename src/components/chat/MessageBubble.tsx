@@ -15,7 +15,7 @@ interface MessageBubbleProps {
 const MessageBubble = ({ message, isOwn, onReaction, onDelete, canDelete }: MessageBubbleProps) => {
   const [showReactions, setShowReactions] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleTouchStart = () => {
     longPressTimer.current = setTimeout(() => {

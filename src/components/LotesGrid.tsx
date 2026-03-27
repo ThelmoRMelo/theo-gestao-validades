@@ -25,6 +25,17 @@ const formatDate = (dateStr: string) => {
   return date.toLocaleDateString('pt-BR');
 };
 
+const formatDateTime = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
 const getDaysUntil = (dateStr: string) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -67,6 +78,7 @@ export const LotesGrid = ({
             <TableHead className="text-foreground whitespace-nowrap">Validade</TableHead>
             <TableHead className="text-foreground text-center whitespace-nowrap">Status</TableHead>
             <TableHead className="text-foreground text-right whitespace-nowrap">Ações</TableHead>
+            <TableHead className="text-foreground whitespace-nowrap">Criado em</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -172,6 +184,11 @@ export const LotesGrid = ({
                       </Button>
                     )}
                   </div>
+                </TableCell>
+
+                {/* 9. Criado em */}
+                <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                  {lote.created_at ? formatDateTime(lote.created_at) : '—'}
                 </TableCell>
               </TableRow>
             );
