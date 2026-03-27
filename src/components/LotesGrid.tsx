@@ -67,6 +67,7 @@ export const LotesGrid = ({
             <TableHead className="text-foreground whitespace-nowrap">Validade</TableHead>
             <TableHead className="text-foreground text-center whitespace-nowrap">Status</TableHead>
             <TableHead className="text-foreground text-right whitespace-nowrap">Ações</TableHead>
+            <TableHead className="text-foreground whitespace-nowrap">Criado em</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
