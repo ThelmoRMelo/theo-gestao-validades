@@ -174,6 +174,11 @@ export const LotesGrid = ({
                     )}
                   </div>
                 </TableCell>
+
+                {/* 9. Criado em */}
+                <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                  {lote.created_at ? formatDateTime(lote.created_at) : '—'}
+                </TableCell>
               </TableRow>
             );
           })}
