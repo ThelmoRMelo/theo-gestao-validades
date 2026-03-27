@@ -55,7 +55,7 @@ const Index = () => {
   const { unreadCount } = useChatUnread(user?.cloud_user_id || user?.local_user_id);
 
   // Secret admin menu state
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [longPressTriggered, setLongPressTriggered] = useState(false);
   const lastClickTime = useRef<number>(0);
   const [showLoginDialog, setShowLoginDialog] = useState(false);

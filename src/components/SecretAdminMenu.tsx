@@ -812,7 +812,7 @@ export function SecretAdminMenu() {
 
 // Hook for triggering secret menu
 export function useSecretAdminTrigger() {
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [longPressTriggered, setLongPressTriggered] = useState(false);
   const lastClickTime = useRef<number>(0);
   const [showLoginDialog, setShowLoginDialog] = useState(false);

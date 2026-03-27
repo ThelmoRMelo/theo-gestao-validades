@@ -36,9 +36,9 @@ const ChatRoom = ({ conversationId, conversationType, title, onBack }: ChatRoomP
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Para ativar menu secreto
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tapCount = useRef(0);
-  const tapTimer = useRef<NodeJS.Timeout | null>(null);
+  const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentUserId = user?.cloud_user_id || user?.local_user_id;
 
   const loadMessages = useCallback(async () => {
