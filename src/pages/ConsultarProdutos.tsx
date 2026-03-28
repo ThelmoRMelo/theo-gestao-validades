@@ -131,35 +131,33 @@ const ConsultarProdutos = () => {
       produto.barcode.includes(searchTerm);
     const matchesSector = selectedSector === 'Todos' || produto.sector === selectedSector;
     
-    // Primeiro aplica busca e setor
     if (!matchesSearch || !matchesSector) return false;
     
     const isInactive = produto.is_active === false;
-    const isExpired = produto.hasExpiredLots && !produto.nearestExpiration; // Só tem lotes vencidos
-    const isActiveAndValid = produto.is_active !== false && (produto.nearestExpiration !== undefined || produto.activeLots === 0);
+    const hasExpiredLot = produto.hasExpiredLots;
     
-    // Toggle "Listar todos" sobrescreve os demais
+    // PRIORIDADE: TOGGLE "TODOS"
     if (showAll) {
       return true;
     }
     
-    // Quando ambos toggles estão ativos: mostra inativos E vencidos (não mostra ativos válidos)
-    if (showInactive && showExpired) {
-      return isInactive || isExpired;
-    }
-    
-    // Toggle "Mostrar inativos": mostra SOMENTE inativos
-    if (showInactive) {
+    // SOMENTE INATIVOS
+    if (showInactive && !showExpired) {
       return isInactive;
     }
     
-    // Toggle "Listar vencidos": mostra SOMENTE produtos com lotes vencidos
-    if (showExpired) {
-      return produto.hasExpiredLots;
+    // SOMENTE VENCIDOS
+    if (showExpired && !showInactive) {
+      return hasExpiredLot;
     }
     
-    // Padrão: mostra apenas produtos ativos e válidos
-    return isActiveAndValid;
+    // INATIVOS + VENCIDOS
+    if (showInactive && showExpired) {
+      return isInactive || hasExpiredLot;
+    }
+    
+    // PADRÃO: apenas ativos e sem lotes vencidos
+    return produto.is_active !== false;
   });
 
   const formatDate = (dateStr: string) => {
