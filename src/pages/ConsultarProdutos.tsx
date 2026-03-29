@@ -136,9 +136,12 @@ const ConsultarProdutos = () => {
     if (!matchesSearch || !matchesSector) return false;
 
     const isInactive = produto.is_active === false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const hasExpiredLot = produto.lots.some((lot) => {
       if (lot.status !== 'active') return false;
-      return getDaysUntil(lot.expiration_date) < 0;
+      const expiration = new Date(`${lot.expiration_date}T00:00:00`);
+      return expiration < today;
     });
 
     if (showAll) return true;

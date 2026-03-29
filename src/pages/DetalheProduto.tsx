@@ -80,6 +80,17 @@ const DetalheProduto = () => {
     return date.toLocaleDateString('pt-BR');
   };
 
+  const formatDateTime = (dateStr?: string) => {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   const getDaysUntil = (dateStr: string) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -221,6 +232,9 @@ const DetalheProduto = () => {
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Hash className="w-4 h-4" />
                       Quantidade: <span className="text-foreground font-medium">{lot.quantity}</span>
+                    </div>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Criado em: <span className="text-foreground">{formatDateTime(lot.created_at)}</span>
                     </div>
                   </div>
                   
