@@ -173,6 +173,7 @@ async function syncLotsToCloud(): Promise<void> {
           quantity: lot.quantity,
           status: lot.status,
           created_by: lot.created_by,
+          created_at: lot.created_at,
           pending_sync: false,
         }, {
           onConflict: 'id'

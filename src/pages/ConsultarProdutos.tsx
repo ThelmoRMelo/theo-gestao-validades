@@ -125,39 +125,31 @@ const ConsultarProdutos = () => {
     loadData();
   };
 
-  const filteredProdutos = produtos.filter(produto => {
-    const matchesSearch = 
-      produto.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      produto.barcode.includes(searchTerm);
+  const filteredProdutos = produtos.filter((produto) => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const matchesSearch =
+      normalizedSearch.length === 0 ||
+      produto.name.toLowerCase().includes(normalizedSearch) ||
+      produto.barcode.includes(searchTerm.trim());
     const matchesSector = selectedSector === 'Todos' || produto.sector === selectedSector;
-    
+
     if (!matchesSearch || !matchesSector) return false;
-    
+
     const isInactive = produto.is_active === false;
-    const hasExpiredLot = produto.hasExpiredLots;
-    
-    // PRIORIDADE: TOGGLE "TODOS"
-    if (showAll) {
-      return true;
-    }
-    
-    // SOMENTE INATIVOS
-    if (showInactive && !showExpired) {
-      return isInactive;
-    }
-    
-    // SOMENTE VENCIDOS
-    if (showExpired && !showInactive) {
-      return hasExpiredLot;
-    }
-    
-    // INATIVOS + VENCIDOS
-    if (showInactive && showExpired) {
-      return isInactive || hasExpiredLot;
-    }
-    
-    // PADRÃO: apenas ativos e sem lotes vencidos
-    return produto.is_active !== false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const hasExpiredLot = produto.lots.some((lot) => {
+      if (lot.status !== 'active') return false;
+      const expiration = new Date(`${lot.expiration_date}T00:00:00`);
+      return expiration < today;
+    });
+
+    if (showAll) return true;
+    if (showInactive && !showExpired) return isInactive;
+    if (showExpired && !showInactive) return hasExpiredLot;
+    if (showInactive && showExpired) return isInactive || hasExpiredLot;
+
+    return !isInactive && !hasExpiredLot;
   });
 
   const formatDate = (dateStr: string) => {
