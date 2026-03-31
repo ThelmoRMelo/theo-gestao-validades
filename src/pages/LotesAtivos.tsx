@@ -431,6 +431,14 @@ const LotesAtivos = () => {
         />
       )}
 
+      {/* Modal de Desativação */}
+      <DeactivateLotModal
+        open={!!deactivatingLot}
+        onClose={() => setDeactivatingLot(null)}
+        onConfirm={handleConfirmDeactivation}
+        productName={deactivatingLot?.produto?.name}
+      />
+
       {/* Dialog de Exclusão */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="bg-card border-border">

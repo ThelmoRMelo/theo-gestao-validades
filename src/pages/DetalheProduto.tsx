@@ -236,6 +236,16 @@ const DetalheProduto = () => {
                     <div className="mt-2 text-xs text-muted-foreground">
                       Criado em: <span className="text-foreground">{formatDateTime(lot.created_at)}</span>
                     </div>
+                    {lot.status === 'disabled' && lot.deactivation_reason && (
+                      <div className="mt-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20 space-y-1">
+                        <div className="text-xs text-destructive font-medium">
+                          Desativado em: {formatDateTime(lot.deactivated_at)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Motivo: <span className="text-foreground">{lot.deactivation_reason}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex gap-2">
