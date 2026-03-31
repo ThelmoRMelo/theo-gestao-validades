@@ -257,9 +257,35 @@ const LotesAtivos = () => {
       toast.error('Você não tem permissão para alterar este lote');
       return;
     }
-    const newStatus = lote.status === 'active' ? 'disabled' : 'active';
-    await updateLotWithSync({ ...lote, status: newStatus });
-    toast.success(newStatus === 'active' ? 'Lote ativado' : 'Lote desativado');
+    if (lote.status === 'active') {
+      // Desativar → abrir modal obrigatório
+      setDeactivatingLot(lote);
+    } else {
+      // Reativar → direto, sem modal
+      await updateLotWithSync({
+        ...lote,
+        status: 'active',
+        deactivation_reason: undefined,
+        deactivated_at: undefined,
+        deactivated_by: undefined,
+      });
+      toast.success('Lote reativado');
+      await refreshCounts();
+      loadLotes();
+    }
+  };
+
+  const handleConfirmDeactivation = async (reason: string) => {
+    if (!deactivatingLot || !user) return;
+    await updateLotWithSync({
+      ...deactivatingLot,
+      status: 'disabled',
+      deactivation_reason: reason,
+      deactivated_at: new Date().toISOString(),
+      deactivated_by: user.cloud_user_id || user.local_user_id,
+    });
+    toast.success('Lote desativado');
+    setDeactivatingLot(null);
     await refreshCounts();
     loadLotes();
   };
