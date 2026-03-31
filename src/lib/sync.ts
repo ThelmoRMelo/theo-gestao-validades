@@ -515,6 +515,9 @@ export async function createLot(lot: Omit<ProductLot, 'created_at' | 'updated_at
             quantity: newLot.quantity,
             status: newLot.status,
             created_by: createdByCloud ?? null,
+            deactivation_reason: newLot.deactivation_reason ?? null,
+            deactivated_at: newLot.deactivated_at ?? null,
+            deactivated_by: newLot.deactivated_by ?? null,
           },
           { onConflict: 'id' }
         );
