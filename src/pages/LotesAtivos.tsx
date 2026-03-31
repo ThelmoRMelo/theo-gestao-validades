@@ -42,6 +42,7 @@ const LotesAtivos = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loteToDelete, setLoteToDelete] = useState<LoteComProduto | null>(null);
   const [editingLot, setEditingLot] = useState<LoteComProduto | null>(null);
+  const [deactivatingLot, setDeactivatingLot] = useState<LoteComProduto | null>(null);
 
   useEffect(() => {
     loadLotes();
