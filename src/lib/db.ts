@@ -51,6 +51,9 @@ export interface ProductLot {
   created_at: string;
   updated_at: string;
   pending_sync: boolean;
+  deactivation_reason?: string;
+  deactivated_at?: string;
+  deactivated_by?: string;
 }
 
 export interface ChatMessage {

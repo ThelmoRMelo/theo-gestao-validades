@@ -282,6 +282,9 @@ async function downloadFromCloud(): Promise<void> {
             created_at: cloudLot.created_at,
             updated_at: cloudLot.updated_at,
             pending_sync: false,
+            deactivation_reason: (cloudLot as any).deactivation_reason ?? undefined,
+            deactivated_at: (cloudLot as any).deactivated_at ?? undefined,
+            deactivated_by: (cloudLot as any).deactivated_by ?? undefined,
           });
         }
       }
