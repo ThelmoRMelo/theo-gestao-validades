@@ -135,7 +135,9 @@ const ConsultarProdutos = () => {
 
     if (!matchesSearch || !matchesSector) return false;
 
-    const isInactive = produto.is_active === false;
+    const isProductInactive = produto.is_active === false;
+    const hasInactiveLot = produto.lots.some((lot) => lot.status === 'disabled');
+    const matchesInactiveFilter = isProductInactive || hasInactiveLot;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const hasExpiredLot = produto.lots.some((lot) => {
@@ -145,11 +147,11 @@ const ConsultarProdutos = () => {
     });
 
     if (showAll) return true;
-    if (showInactive && !showExpired) return isInactive;
+    if (showInactive && !showExpired) return matchesInactiveFilter;
     if (showExpired && !showInactive) return hasExpiredLot;
-    if (showInactive && showExpired) return isInactive || hasExpiredLot;
+    if (showInactive && showExpired) return matchesInactiveFilter || hasExpiredLot;
 
-    return !isInactive && !hasExpiredLot;
+    return !isProductInactive && !hasExpiredLot;
   });
 
   const formatDate = (dateStr: string) => {
