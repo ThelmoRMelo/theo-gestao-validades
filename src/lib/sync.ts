@@ -558,6 +558,9 @@ export async function updateLot(lot: ProductLot): Promise<{ success: boolean; er
           expiration_date: updatedLot.expiration_date,
           quantity: updatedLot.quantity,
           status: updatedLot.status,
+          deactivation_reason: updatedLot.deactivation_reason ?? null,
+          deactivated_at: updatedLot.deactivated_at ?? null,
+          deactivated_by: updatedLot.deactivated_by ?? null,
         })
         .eq('id', updatedLot.id);
       
