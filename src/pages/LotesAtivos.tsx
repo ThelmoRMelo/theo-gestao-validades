@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import LotesGrid, { LoteComProduto } from '@/components/LotesGrid';
 import LotesSummaryCard from '@/components/LotesSummaryCard';
 import EditLotModal from '@/components/EditLotModal';
+import DeactivateLotModal from '@/components/DeactivateLotModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,7 @@ const LotesAtivos = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loteToDelete, setLoteToDelete] = useState<LoteComProduto | null>(null);
   const [editingLot, setEditingLot] = useState<LoteComProduto | null>(null);
+  const [deactivatingLot, setDeactivatingLot] = useState<LoteComProduto | null>(null);
 
   useEffect(() => {
     loadLotes();
@@ -255,9 +257,35 @@ const LotesAtivos = () => {
       toast.error('Você não tem permissão para alterar este lote');
       return;
     }
-    const newStatus = lote.status === 'active' ? 'disabled' : 'active';
-    await updateLotWithSync({ ...lote, status: newStatus });
-    toast.success(newStatus === 'active' ? 'Lote ativado' : 'Lote desativado');
+    if (lote.status === 'active') {
+      // Desativar → abrir modal obrigatório
+      setDeactivatingLot(lote);
+    } else {
+      // Reativar → direto, sem modal
+      await updateLotWithSync({
+        ...lote,
+        status: 'active',
+        deactivation_reason: undefined,
+        deactivated_at: undefined,
+        deactivated_by: undefined,
+      });
+      toast.success('Lote reativado');
+      await refreshCounts();
+      loadLotes();
+    }
+  };
+
+  const handleConfirmDeactivation = async (reason: string) => {
+    if (!deactivatingLot || !user) return;
+    await updateLotWithSync({
+      ...deactivatingLot,
+      status: 'disabled',
+      deactivation_reason: reason,
+      deactivated_at: new Date().toISOString(),
+      deactivated_by: user.cloud_user_id || user.local_user_id,
+    });
+    toast.success('Lote desativado');
+    setDeactivatingLot(null);
     await refreshCounts();
     loadLotes();
   };
@@ -402,6 +430,14 @@ const LotesAtivos = () => {
           onSave={handleEditSave}
         />
       )}
+
+      {/* Modal de Desativação */}
+      <DeactivateLotModal
+        open={!!deactivatingLot}
+        onClose={() => setDeactivatingLot(null)}
+        onConfirm={handleConfirmDeactivation}
+        productName={deactivatingLot?.produto?.name}
+      />
 
       {/* Dialog de Exclusão */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

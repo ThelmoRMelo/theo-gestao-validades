@@ -214,6 +214,9 @@ export type Database = {
           barcode: string
           created_at: string | null
           created_by: string | null
+          deactivated_at: string | null
+          deactivated_by: string | null
+          deactivation_reason: string | null
           expiration_date: string
           id: string
           pending_sync: boolean | null
@@ -225,6 +228,9 @@ export type Database = {
           barcode: string
           created_at?: string | null
           created_by?: string | null
+          deactivated_at?: string | null
+          deactivated_by?: string | null
+          deactivation_reason?: string | null
           expiration_date: string
           id?: string
           pending_sync?: boolean | null
@@ -236,6 +242,9 @@ export type Database = {
           barcode?: string
           created_at?: string | null
           created_by?: string | null
+          deactivated_at?: string | null
+          deactivated_by?: string | null
+          deactivation_reason?: string | null
           expiration_date?: string
           id?: string
           pending_sync?: boolean | null

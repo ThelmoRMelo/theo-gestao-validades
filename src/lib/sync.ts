@@ -175,6 +175,9 @@ async function syncLotsToCloud(): Promise<void> {
           created_by: lot.created_by,
           created_at: lot.created_at,
           pending_sync: false,
+          deactivation_reason: lot.deactivation_reason ?? null,
+          deactivated_at: lot.deactivated_at ?? null,
+          deactivated_by: lot.deactivated_by ?? null,
         }, {
           onConflict: 'id'
         });
@@ -279,6 +282,9 @@ async function downloadFromCloud(): Promise<void> {
             created_at: cloudLot.created_at,
             updated_at: cloudLot.updated_at,
             pending_sync: false,
+            deactivation_reason: (cloudLot as any).deactivation_reason ?? undefined,
+            deactivated_at: (cloudLot as any).deactivated_at ?? undefined,
+            deactivated_by: (cloudLot as any).deactivated_by ?? undefined,
           });
         }
       }
@@ -509,6 +515,9 @@ export async function createLot(lot: Omit<ProductLot, 'created_at' | 'updated_at
             quantity: newLot.quantity,
             status: newLot.status,
             created_by: createdByCloud ?? null,
+            deactivation_reason: newLot.deactivation_reason ?? null,
+            deactivated_at: newLot.deactivated_at ?? null,
+            deactivated_by: newLot.deactivated_by ?? null,
           },
           { onConflict: 'id' }
         );
@@ -555,6 +564,9 @@ export async function updateLot(lot: ProductLot): Promise<{ success: boolean; er
           expiration_date: updatedLot.expiration_date,
           quantity: updatedLot.quantity,
           status: updatedLot.status,
+          deactivation_reason: updatedLot.deactivation_reason ?? null,
+          deactivated_at: updatedLot.deactivated_at ?? null,
+          deactivated_by: updatedLot.deactivated_by ?? null,
         })
         .eq('id', updatedLot.id);
       
