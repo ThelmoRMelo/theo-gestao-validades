@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import LotesGrid, { LoteComProduto } from '@/components/LotesGrid';
 import LotesSummaryCard from '@/components/LotesSummaryCard';
 import EditLotModal from '@/components/EditLotModal';
+import DeactivateLotModal from '@/components/DeactivateLotModal';
 import {
   AlertDialog,
   AlertDialogAction,
