@@ -209,7 +209,7 @@ const GestaoMetas = () => {
           <div className="space-y-2">
             {MESES.map((nome, i) => (
               <div key={i} className="flex items-center justify-between gap-3 py-2 border-b border-border/50 last:border-0">
-                <span className="text-sm text-foreground w-24">{nome}</span>
+                <span className="text-sm text-foreground w-20 shrink-0">{nome}</span>
                 <div className="flex items-center gap-1 flex-1 justify-end">
                   <span className="text-xs text-muted-foreground">R$</span>
                   <Input
@@ -218,7 +218,7 @@ const GestaoMetas = () => {
                     value={metas[i].meta_total === 0 ? '' : metas[i].meta_total.toLocaleString('pt-BR')}
                     onChange={e => handleMetaChange(i + 1, e.target.value)}
                     placeholder="0"
-                    className="w-32 text-right h-8 text-sm"
+                    className="flex-1 min-w-0 text-right h-8 text-sm"
                   />
                 </div>
               </div>
