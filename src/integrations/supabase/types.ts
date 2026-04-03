@@ -209,6 +209,95 @@ export type Database = {
           },
         ]
       }
+      metas_mensais: {
+        Row: {
+          ano: number
+          created_at: string | null
+          id: string
+          mes: number
+          meta_total: number
+          updated_at: string | null
+        }
+        Insert: {
+          ano: number
+          created_at?: string | null
+          id?: string
+          mes: number
+          meta_total?: number
+          updated_at?: string | null
+        }
+        Update: {
+          ano?: number
+          created_at?: string | null
+          id?: string
+          mes?: number
+          meta_total?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      metas_setores: {
+        Row: {
+          ativo: boolean
+          created_at: string | null
+          id: string
+          nome: string
+          percentual: number
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string | null
+          id?: string
+          nome: string
+          percentual?: number
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string | null
+          id?: string
+          nome?: string
+          percentual?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      metas_vendas: {
+        Row: {
+          created_at: string | null
+          data: string
+          hora: string
+          id: string
+          setor_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string | null
+          data?: string
+          hora?: string
+          id?: string
+          setor_id: string
+          valor: number
+        }
+        Update: {
+          created_at?: string | null
+          data?: string
+          hora?: string
+          id?: string
+          setor_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metas_vendas_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "metas_setores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_lots: {
         Row: {
           barcode: string

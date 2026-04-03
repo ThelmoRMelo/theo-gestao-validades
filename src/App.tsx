@@ -18,6 +18,9 @@ import ChatGlobal from "./pages/ChatGlobal";
 import Configuracoes from "./pages/Configuracoes";
 import AdminLogin from "./pages/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
+import GestaoMetas from "./pages/GestaoMetas";
+import LancarVenda from "./pages/LancarVenda";
+import DashboardMetas from "./pages/DashboardMetas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -64,6 +67,9 @@ const App = () => {
                 <Route path="/configuracoes" element={<Configuracoes />} />
                 <Route path="/admin-login" element={<AdminLogin />} />
                 <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/gestao-metas" element={<GestaoMetas />} />
+                <Route path="/lancar-venda" element={<LancarVenda />} />
+                <Route path="/metas" element={<DashboardMetas />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             )}
