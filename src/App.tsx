@@ -67,6 +67,9 @@ const App = () => {
                 <Route path="/configuracoes" element={<Configuracoes />} />
                 <Route path="/admin-login" element={<AdminLogin />} />
                 <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/gestao-metas" element={<GestaoMetas />} />
+                <Route path="/lancar-venda" element={<LancarVenda />} />
+                <Route path="/metas" element={<DashboardMetas />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             )}

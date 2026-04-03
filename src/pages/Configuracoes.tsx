@@ -255,6 +255,26 @@ const Configuracoes = () => {
           </Button>
         </div>
 
+        {/* Gestão de Metas */}
+        <div className="glass-card p-4">
+          <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+            <Target className="w-5 h-5 text-yellow" />
+            Gestão de Metas
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4">Configure metas mensais e distribuição por setores</p>
+          <div className="space-y-2">
+            <Button onClick={() => navigate('/gestao-metas')} className="w-full btn-secondary">
+              <Target className="w-4 h-4 mr-2" /> Configurar Metas
+            </Button>
+            <Button onClick={() => navigate('/lancar-venda')} className="w-full btn-secondary">
+              <ShoppingCart className="w-4 h-4 mr-2" /> Lançar Venda
+            </Button>
+            <Button onClick={() => window.open('/metas', '_blank')} variant="outline" className="w-full">
+              <ChevronRight className="w-4 h-4 mr-2" /> Abrir Dashboard de Metas
+            </Button>
+          </div>
+        </div>
+
         {/* Admin Secret (invisível) */}
         <div 
           onClick={handleAdminClick}
