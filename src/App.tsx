@@ -18,6 +18,9 @@ import ChatGlobal from "./pages/ChatGlobal";
 import Configuracoes from "./pages/Configuracoes";
 import AdminLogin from "./pages/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
+import GestaoMetas from "./pages/GestaoMetas";
+import LancarVenda from "./pages/LancarVenda";
+import DashboardMetas from "./pages/DashboardMetas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
