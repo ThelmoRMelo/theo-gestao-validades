@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Settings, Palette, Download, RefreshCw, 
   User, Shield, ChevronRight, Smartphone, Wifi, WifiOff, Bell, BellOff,
-  FileSpreadsheet
+  FileSpreadsheet, Target, ShoppingCart
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
