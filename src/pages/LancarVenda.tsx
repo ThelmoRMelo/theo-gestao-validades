@@ -49,6 +49,21 @@ const LancarVenda = () => {
     setIsSaving(true);
     try {
       const now = new Date();
+      const mesAtual = now.getMonth() + 1;
+      const anoAtual = now.getFullYear();
+      const startDate = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-01`;
+      const lastDay = new Date(anoAtual, mesAtual, 0).getDate();
+      const endDate = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+      // Remove lançamento anterior do mesmo setor no mês atual
+      await supabase
+        .from('metas_vendas')
+        .delete()
+        .eq('setor_id', setorId)
+        .gte('data', startDate)
+        .lte('data', endDate);
+
+      // Insere novo lançamento
       const { error } = await supabase.from('metas_vendas').insert({
         setor_id: setorId,
         valor: numVal,
@@ -58,7 +73,7 @@ const LancarVenda = () => {
 
       if (error) throw error;
 
-      toast.success('Venda registrada com sucesso!');
+      toast.success('Venda registrada com sucesso! (valor anterior substituído)');
       setValor('');
       setSetorId('');
     } catch (e) {
