@@ -236,16 +236,26 @@ const GestaoMetas = () => {
           </div>
 
           <div className="space-y-2">
-            {setores.map(s => (
-              <div key={s.id} className={`flex items-center justify-between gap-2 py-2 border-b border-border/50 last:border-0 ${!s.ativo ? 'opacity-50' : ''}`}>
-                <span className="text-sm text-foreground flex-1">{s.nome}</span>
-                <span className="text-sm font-bold text-primary">{s.percentual}%</span>
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditSetor(s)}>
-                  <Pencil className="w-3 h-3" />
-                </Button>
-                <Switch checked={s.ativo} onCheckedChange={() => toggleSetorAtivo(s)} />
-              </div>
-            ))}
+            {setores.map(s => {
+              const mesAtual = new Date().getMonth();
+              const metaMes = metas[mesAtual]?.meta_total || 0;
+              const metaSetor = s.ativo ? metaMes * (s.percentual / 100) : 0;
+              return (
+                <div key={s.id} className={`flex items-center justify-between gap-2 py-2 border-b border-border/50 last:border-0 ${!s.ativo ? 'opacity-50' : ''}`}>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm text-foreground block">{s.nome}</span>
+                    {s.ativo && metaSetor > 0 && (
+                      <span className="text-xs text-green">Meta: {metaSetor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    )}
+                  </div>
+                  <span className="text-sm font-bold text-primary shrink-0">{s.percentual}%</span>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => openEditSetor(s)}>
+                    <Pencil className="w-3 h-3" />
+                  </Button>
+                  <Switch checked={s.ativo} onCheckedChange={() => toggleSetorAtivo(s)} />
+                </div>
+              );
+            })}
           </div>
 
           {/* Total indicator */}
