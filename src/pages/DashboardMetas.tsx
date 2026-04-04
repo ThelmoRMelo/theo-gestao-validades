@@ -74,6 +74,14 @@ const DashboardMetas = () => {
     });
     setTotalVendido(total);
 
+    // Vendido hoje
+    const hoje = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-${String(diaAtual).padStart(2, '0')}`;
+    const { data: vendasHoje } = await supabase
+      .from('metas_vendas')
+      .select('valor')
+      .eq('data', hoje);
+    setVendidoHoje((vendasHoje || []).reduce((s: number, v: any) => s + Number(v.valor), 0));
+
     const setoresProcessados: SetorData[] = (setoresRaw || []).map((s: any) => {
       const meta = metaTotal * (Number(s.percentual) / 100);
       const vendido = vendasPorSetor.get(s.id) || 0;
