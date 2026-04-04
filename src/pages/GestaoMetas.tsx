@@ -87,9 +87,44 @@ const GestaoMetas = () => {
     loadData();
   }, [loadData]);
 
+  // Store raw text per month for editing
+  const [rawInputs, setRawInputs] = useState<Record<number, string>>({});
+
+  const parseBRLToNumber = (value: string): number => {
+    // Remove dots (thousand sep), replace comma with dot (decimal sep)
+    const cleaned = value.replace(/[^\d,]/g, '').replace(',', '.');
+    return parseFloat(cleaned) || 0;
+  };
+
+  const formatToBRL = (value: number): string => {
+    if (value === 0) return '';
+    return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
   const handleMetaChange = (mes: number, value: string) => {
-    const numValue = parseFloat(value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+    setRawInputs(prev => ({ ...prev, [mes]: value }));
+    const numValue = parseBRLToNumber(value);
     setMetas(prev => prev.map(m => m.mes === mes ? { ...m, meta_total: numValue } : m));
+  };
+
+  const handleMetaBlur = (mes: number) => {
+    const meta = metas.find(m => m.mes === mes);
+    if (meta) {
+      setRawInputs(prev => ({ ...prev, [mes]: formatToBRL(meta.meta_total) }));
+    }
+  };
+
+  const handleMetaFocus = (mes: number) => {
+    const meta = metas.find(m => m.mes === mes);
+    if (meta && meta.meta_total > 0) {
+      // Show raw number without formatting for easier editing
+      setRawInputs(prev => ({ ...prev, [mes]: meta.meta_total.toString().replace('.', ',') }));
+    }
+  };
+
+  const getMetaDisplay = (mes: number, metaTotal: number): string => {
+    if (rawInputs[mes] !== undefined) return rawInputs[mes];
+    return formatToBRL(metaTotal);
   };
 
   const formatCurrency = (value: number) => {
@@ -215,9 +250,11 @@ const GestaoMetas = () => {
                   <Input
                     type="text"
                     inputMode="decimal"
-                    value={metas[i].meta_total === 0 ? '' : metas[i].meta_total.toLocaleString('pt-BR')}
+                    value={getMetaDisplay(i + 1, metas[i].meta_total)}
                     onChange={e => handleMetaChange(i + 1, e.target.value)}
-                    placeholder="0"
+                    onBlur={() => handleMetaBlur(i + 1)}
+                    onFocus={() => handleMetaFocus(i + 1)}
+                    placeholder="0,00"
                     className="flex-1 min-w-0 text-right h-8 text-sm"
                   />
                 </div>
