@@ -112,11 +112,21 @@ const Index = () => {
       console.error('Erro ao carregar meta do dia:', e);
     }
   }, []);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadAppIdentity();
+    loadMetaDoDia();
   }, []);
+
+  // Realtime para meta do dia
+  useEffect(() => {
+    const channel = supabase
+      .channel('meta-dia-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_vendas' }, () => loadMetaDoDia())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_mensais' }, () => loadMetaDoDia())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [loadMetaDoDia]);
 
   const loadAppIdentity = async () => {
     const identity = await db.getAppIdentity();
