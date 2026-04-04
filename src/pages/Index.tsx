@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { Package, AlertTriangle, Plus, Search, Settings, MessageCircle, Shield, Trash2, X, Check } from 'lucide-react';
