@@ -143,8 +143,8 @@ const DashboardMetas = () => {
         </p>
       </header>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      {/* Summary Cards - Row 1 */}
+      <div className="grid grid-cols-3 gap-3 mb-3">
         <div className="glass-card p-3 text-center">
           <p className="text-xs text-muted-foreground mb-1">Meta do Mês</p>
           <p className="text-lg font-bold text-primary">{fmt(metaGeral)}</p>
@@ -157,6 +157,29 @@ const DashboardMetas = () => {
         <div className="glass-card p-3 text-center">
           <p className="text-xs text-muted-foreground mb-1">Falta p/ Meta</p>
           <p className="text-lg font-bold text-coral">{fmt(faltaParaMeta)}</p>
+        </div>
+      </div>
+
+      {/* Meta do Dia - Row 2 */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="glass-card p-3 text-center">
+          <p className="text-xs text-muted-foreground mb-1">Meta do Dia</p>
+          <p className="text-lg font-bold text-primary">{fmt(metaDoDia)}</p>
+        </div>
+        <div className="glass-card p-3 text-center">
+          <p className="text-xs text-muted-foreground mb-1">Vendido Hoje</p>
+          <p className="text-lg font-bold text-green">{fmt(vendidoHoje)}</p>
+        </div>
+        <div className="glass-card p-3 text-center">
+          <p className="text-xs text-muted-foreground mb-1">Resultado</p>
+          {resultadoDia < 0 ? (
+            <p className="text-lg font-bold text-coral">{fmt(resultadoDia)}</p>
+          ) : (
+            <p className="text-lg font-bold text-green">+{fmt(resultadoDia)}</p>
+          )}
+          <p className={`text-xs ${resultadoDia < 0 ? 'text-coral' : 'text-green'}`}>
+            {resultadoDia < 0 ? `Faltam ${fmt(Math.abs(resultadoDia))}` : resultadoDia === 0 && metaDoDia > 0 ? 'Meta atingida ✅' : 'Acima da meta 🚀'}
+          </p>
         </div>
       </div>
 

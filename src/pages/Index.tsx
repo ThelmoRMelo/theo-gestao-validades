@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
-import { Package, AlertTriangle, Plus, Search, Settings, MessageCircle, Shield, Trash2, X, Check, Target } from 'lucide-react';
+import { Package, AlertTriangle, Plus, Search, Settings, MessageCircle, Shield, Trash2, X, Check } from 'lucide-react';
 import * as db from '@/lib/db';
 import type { AppIdentity } from '@/lib/db';
 import {
