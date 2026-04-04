@@ -250,9 +250,11 @@ const GestaoMetas = () => {
                   <Input
                     type="text"
                     inputMode="decimal"
-                    value={metas[i].meta_total === 0 ? '' : metas[i].meta_total.toLocaleString('pt-BR')}
+                    value={getMetaDisplay(i + 1, metas[i].meta_total)}
                     onChange={e => handleMetaChange(i + 1, e.target.value)}
-                    placeholder="0"
+                    onBlur={() => handleMetaBlur(i + 1)}
+                    onFocus={() => handleMetaFocus(i + 1)}
+                    placeholder="0,00"
                     className="flex-1 min-w-0 text-right h-8 text-sm"
                   />
                 </div>
