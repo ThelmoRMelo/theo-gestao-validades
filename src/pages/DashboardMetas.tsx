@@ -8,9 +8,9 @@ interface SetorData {
   percentual: number;
   meta: number;
   vendido: number;
+  vendaHoje: number;
   falta: number;
   metaDiaria: number;
-  status: 'ok' | 'atencao' | 'risco';
 }
 
 const DashboardMetas = () => {
@@ -28,15 +28,12 @@ const DashboardMetas = () => {
 
   const percentualAtingido = metaGeral > 0 ? (totalVendido / metaGeral) * 100 : 0;
   const faltaParaMeta = Math.max(0, metaGeral - totalVendido);
-  const progressoEsperado = (diaAtual / diasNoMes) * 100;
 
-  // Meta do Dia
-  const [vendidoHoje, setVendidoHoje] = useState(0);
+  const vendidoHoje = setoresData.reduce((sum, s) => sum + s.vendaHoje, 0);
   const metaDoDia = diasRestantes > 0 ? faltaParaMeta / diasRestantes : 0;
   const resultadoDia = vendidoHoje - metaDoDia;
 
   const loadData = useCallback(async () => {
-    // Meta do mês
     const { data: metaData } = await supabase
       .from('metas_mensais')
       .select('meta_total')
@@ -47,88 +44,64 @@ const DashboardMetas = () => {
     const metaTotal = metaData ? Number(metaData.meta_total) : 0;
     setMetaGeral(metaTotal);
 
-    // Setores
     const { data: setoresRaw } = await supabase
       .from('metas_setores')
       .select('*')
       .eq('ativo', true)
       .order('nome');
 
-    // Vendas do mês
     const startDate = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-01`;
     const endDate = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-${String(diasNoMes).padStart(2, '0')}`;
+    const hoje = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-${String(diaAtual).padStart(2, '0')}`;
 
     const { data: vendasRaw } = await supabase
       .from('metas_vendas')
-      .select('setor_id, valor')
+      .select('setor_id, valor, data')
       .gte('data', startDate)
       .lte('data', endDate);
 
-    // Aggregate
-    const vendasPorSetor = new Map<string, number>();
+    // Aggregate monthly and today per sector
+    const vendasMensalPorSetor = new Map<string, number>();
+    const vendasHojePorSetor = new Map<string, number>();
     let total = 0;
+
     (vendasRaw || []).forEach((v: any) => {
       const val = Number(v.valor);
       total += val;
-      vendasPorSetor.set(v.setor_id, (vendasPorSetor.get(v.setor_id) || 0) + val);
+      vendasMensalPorSetor.set(v.setor_id, (vendasMensalPorSetor.get(v.setor_id) || 0) + val);
+      if (v.data === hoje) {
+        vendasHojePorSetor.set(v.setor_id, (vendasHojePorSetor.get(v.setor_id) || 0) + val);
+      }
     });
     setTotalVendido(total);
 
-    // Vendido hoje
-    const hoje = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-${String(diaAtual).padStart(2, '0')}`;
-    const { data: vendasHoje } = await supabase
-      .from('metas_vendas')
-      .select('valor')
-      .eq('data', hoje);
-    setVendidoHoje((vendasHoje || []).reduce((s: number, v: any) => s + Number(v.valor), 0));
-
     const setoresProcessados: SetorData[] = (setoresRaw || []).map((s: any) => {
       const meta = metaTotal * (Number(s.percentual) / 100);
-      const vendido = vendasPorSetor.get(s.id) || 0;
+      const vendido = vendasMensalPorSetor.get(s.id) || 0;
+      const vendaHoje = vendasHojePorSetor.get(s.id) || 0;
       const falta = Math.max(0, meta - vendido);
       const metaDiaria = diasRestantes > 0 ? falta / diasRestantes : 0;
-      const progresso = meta > 0 ? (vendido / meta) * 100 : 0;
-      
-      let status: 'ok' | 'atencao' | 'risco' = 'ok';
-      if (progresso < progressoEsperado * 0.7) status = 'risco';
-      else if (progresso < progressoEsperado) status = 'atencao';
 
-      return { id: s.id, nome: s.nome, percentual: Number(s.percentual), meta, vendido, falta, metaDiaria, status };
+      return { id: s.id, nome: s.nome, percentual: Number(s.percentual), meta, vendido, vendaHoje, falta, metaDiaria };
     });
 
     setSetoresData(setoresProcessados);
     setLoading(false);
-  }, [anoAtual, mesAtual, diasNoMes, diasRestantes, progressoEsperado]);
+  }, [anoAtual, mesAtual, diasNoMes, diasRestantes, diaAtual]);
 
   useEffect(() => {
     loadData();
-
-    // Realtime subscription
     const channel = supabase
       .channel('metas-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_vendas' }, () => loadData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_mensais' }, () => loadData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_setores' }, () => loadData())
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [loadData]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
   const ranking = [...setoresData].sort((a, b) => b.vendido - a.vendido);
-
-  const statusColor = (s: string) => {
-    if (s === 'ok') return 'text-green bg-green/10 border-green/30';
-    if (s === 'atencao') return 'text-yellow bg-yellow/10 border-yellow/30';
-    return 'text-coral bg-coral/10 border-coral/30';
-  };
-
-  const statusIcon = (s: string) => {
-    if (s === 'ok') return '✅';
-    if (s === 'atencao') return '⚠️';
-    return '❌';
-  };
 
   if (loading) {
     return (
@@ -143,7 +116,6 @@ const DashboardMetas = () => {
 
   return (
     <div className="min-h-screen bg-background p-4 pb-8">
-      {/* Header */}
       <header className="text-center mb-6">
         <h1 className="font-display text-xl font-bold text-primary">Painel de Metas</h1>
         <p className="text-muted-foreground text-sm">
@@ -200,7 +172,7 @@ const DashboardMetas = () => {
         <div className="w-full h-3 bg-secondary rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${
-              percentualAtingido >= 100 ? 'bg-green' : percentualAtingido >= progressoEsperado ? 'bg-green' : percentualAtingido >= progressoEsperado * 0.7 ? 'bg-yellow' : 'bg-coral'
+              percentualAtingido >= 100 ? 'bg-green' : percentualAtingido >= (diaAtual / diasNoMes) * 100 ? 'bg-green' : percentualAtingido >= (diaAtual / diasNoMes) * 70 ? 'bg-yellow' : 'bg-coral'
             }`}
             style={{ width: `${Math.min(100, percentualAtingido)}%` }}
           />
@@ -221,7 +193,7 @@ const DashboardMetas = () => {
                 <th className="text-right py-2 text-muted-foreground font-medium">Vendido</th>
                 <th className="text-right py-2 text-muted-foreground font-medium">Falta</th>
                 <th className="text-right py-2 text-muted-foreground font-medium">Meta/Dia</th>
-                <th className="text-center py-2 text-muted-foreground font-medium">Status</th>
+                <th className="text-right py-2 text-muted-foreground font-medium">Venda/Hoje</th>
               </tr>
             </thead>
             <tbody>
@@ -232,7 +204,7 @@ const DashboardMetas = () => {
                   <td className="py-2 text-right text-green">{fmt(s.vendido)}</td>
                   <td className="py-2 text-right text-coral">{fmt(s.falta)}</td>
                   <td className="py-2 text-right text-foreground">{fmt(s.metaDiaria)}</td>
-                  <td className="py-2 text-center">{statusIcon(s.status)}</td>
+                  <td className="py-2 text-right font-bold text-primary">{fmt(s.vendaHoje)}</td>
                 </tr>
               ))}
             </tbody>
@@ -242,7 +214,6 @@ const DashboardMetas = () => {
 
       {/* Ranking + Alerts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Ranking */}
         <div className="glass-card p-4">
           <h3 className="font-display text-base font-semibold text-foreground flex items-center gap-2 mb-3">
             <Trophy className="w-5 h-5 text-yellow" /> Ranking de Setores
@@ -260,19 +231,24 @@ const DashboardMetas = () => {
           </div>
         </div>
 
-        {/* Alertas */}
         <div className="glass-card p-4">
           <h3 className="font-display text-base font-semibold text-foreground flex items-center gap-2 mb-3">
             <AlertTriangle className="w-5 h-5 text-coral" /> Alertas
           </h3>
           <div className="space-y-2">
-            {setoresData.filter(s => s.status === 'risco').map(s => (
+            {setoresData.filter(s => {
+              const progresso = s.meta > 0 ? (s.vendido / s.meta) * 100 : 0;
+              return progresso < (diaAtual / diasNoMes) * 70;
+            }).map(s => (
               <div key={s.id} className="p-2 rounded-lg bg-coral/10 border border-coral/30 text-sm">
                 <span className="text-coral font-medium">⚠️ {s.nome}</span>
                 <span className="text-muted-foreground"> está abaixo do esperado!</span>
               </div>
             ))}
-            {setoresData.filter(s => s.status === 'risco').length === 0 && (
+            {setoresData.filter(s => {
+              const progresso = s.meta > 0 ? (s.vendido / s.meta) * 100 : 0;
+              return progresso < (diaAtual / diasNoMes) * 70;
+            }).length === 0 && (
               <p className="text-sm text-muted-foreground">Todos os setores estão dentro da meta 👍</p>
             )}
           </div>
