@@ -74,59 +74,6 @@ const Index = () => {
   const [userToDelete, setUserToDelete] = useState<AppUser | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Meta do Dia state
-  const [metaDoDia, setMetaDoDia] = useState(0);
-  const [vendidoHoje, setVendidoHoje] = useState(0);
-  const [metaDoDiaLoaded, setMetaDoDiaLoaded] = useState(false);
-
-  const loadMetaDoDia = useCallback(async () => {
-    try {
-      const now = new Date();
-      const mes = now.getMonth() + 1;
-      const ano = now.getFullYear();
-      const dia = now.getDate();
-      const diasNoMes = new Date(ano, mes, 0).getDate();
-      const diasRestantes = diasNoMes - dia + 1; // inclui hoje
-
-      const hoje = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-      const startDate = `${ano}-${String(mes).padStart(2, '0')}-01`;
-      const endDate = `${ano}-${String(mes).padStart(2, '0')}-${String(diasNoMes).padStart(2, '0')}`;
-
-      const [metaRes, vendasMesRes, vendasHojeRes] = await Promise.all([
-        supabase.from('metas_mensais').select('meta_total').eq('ano', ano).eq('mes', mes).maybeSingle(),
-        supabase.from('metas_vendas').select('valor').gte('data', startDate).lte('data', endDate),
-        supabase.from('metas_vendas').select('valor').eq('data', hoje),
-      ]);
-
-      const metaTotal = metaRes.data ? Number(metaRes.data.meta_total) : 0;
-      const totalVendidoMes = (vendasMesRes.data || []).reduce((s: number, v: any) => s + Number(v.valor), 0);
-      const totalHoje = (vendasHojeRes.data || []).reduce((s: number, v: any) => s + Number(v.valor), 0);
-
-      const faltaNoMes = Math.max(0, metaTotal - totalVendidoMes);
-      const metaDia = diasRestantes > 0 ? faltaNoMes / diasRestantes : 0;
-
-      setMetaDoDia(metaDia);
-      setVendidoHoje(totalHoje);
-      setMetaDoDiaLoaded(true);
-    } catch (e) {
-      console.error('Erro ao carregar meta do dia:', e);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadAppIdentity();
-    loadMetaDoDia();
-  }, []);
-
-  // Realtime para meta do dia
-  useEffect(() => {
-    const channel = supabase
-      .channel('meta-dia-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_vendas' }, () => loadMetaDoDia())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_mensais' }, () => loadMetaDoDia())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [loadMetaDoDia]);
 
   const loadAppIdentity = async () => {
     const identity = await db.getAppIdentity();
