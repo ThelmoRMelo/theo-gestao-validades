@@ -30,6 +30,11 @@ const DashboardMetas = () => {
   const faltaParaMeta = Math.max(0, metaGeral - totalVendido);
   const progressoEsperado = (diaAtual / diasNoMes) * 100;
 
+  // Meta do Dia
+  const [vendidoHoje, setVendidoHoje] = useState(0);
+  const metaDoDia = diasRestantes > 0 ? faltaParaMeta / diasRestantes : 0;
+  const resultadoDia = vendidoHoje - metaDoDia;
+
   const loadData = useCallback(async () => {
     // Meta do mês
     const { data: metaData } = await supabase
