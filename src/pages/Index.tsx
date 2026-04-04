@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
-import { Package, AlertTriangle, Plus, Search, Settings, MessageCircle, Shield, Trash2, X, Check } from 'lucide-react';
+import { Package, AlertTriangle, Plus, Search, Settings, MessageCircle, Shield, Trash2, X, Check, Target } from 'lucide-react';
 import * as db from '@/lib/db';
 import type { AppIdentity } from '@/lib/db';
 import {
@@ -74,9 +74,59 @@ const Index = () => {
   const [userToDelete, setUserToDelete] = useState<AppUser | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Meta do Dia state
+  const [metaDoDia, setMetaDoDia] = useState(0);
+  const [vendidoHoje, setVendidoHoje] = useState(0);
+  const [metaDoDiaLoaded, setMetaDoDiaLoaded] = useState(false);
+
+  const loadMetaDoDia = useCallback(async () => {
+    try {
+      const now = new Date();
+      const mes = now.getMonth() + 1;
+      const ano = now.getFullYear();
+      const dia = now.getDate();
+      const diasNoMes = new Date(ano, mes, 0).getDate();
+      const diasRestantes = diasNoMes - dia + 1; // inclui hoje
+
+      const hoje = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      const startDate = `${ano}-${String(mes).padStart(2, '0')}-01`;
+      const endDate = `${ano}-${String(mes).padStart(2, '0')}-${String(diasNoMes).padStart(2, '0')}`;
+
+      const [metaRes, vendasMesRes, vendasHojeRes] = await Promise.all([
+        supabase.from('metas_mensais').select('meta_total').eq('ano', ano).eq('mes', mes).maybeSingle(),
+        supabase.from('metas_vendas').select('valor').gte('data', startDate).lte('data', endDate),
+        supabase.from('metas_vendas').select('valor').eq('data', hoje),
+      ]);
+
+      const metaTotal = metaRes.data ? Number(metaRes.data.meta_total) : 0;
+      const totalVendidoMes = (vendasMesRes.data || []).reduce((s: number, v: any) => s + Number(v.valor), 0);
+      const totalHoje = (vendasHojeRes.data || []).reduce((s: number, v: any) => s + Number(v.valor), 0);
+
+      const faltaNoMes = Math.max(0, metaTotal - totalVendidoMes);
+      const metaDia = diasRestantes > 0 ? faltaNoMes / diasRestantes : 0;
+
+      setMetaDoDia(metaDia);
+      setVendidoHoje(totalHoje);
+      setMetaDoDiaLoaded(true);
+    } catch (e) {
+      console.error('Erro ao carregar meta do dia:', e);
+    }
+  }, []);
+
   useEffect(() => {
     loadAppIdentity();
+    loadMetaDoDia();
   }, []);
+
+  // Realtime para meta do dia
+  useEffect(() => {
+    const channel = supabase
+      .channel('meta-dia-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_vendas' }, () => loadMetaDoDia())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_mensais' }, () => loadMetaDoDia())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [loadMetaDoDia]);
 
   const loadAppIdentity = async () => {
     const identity = await db.getAppIdentity();
@@ -276,6 +326,77 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {/* Meta do Dia Card */}
+      {metaDoDiaLoaded && (
+        <div className="mt-6 glass-card p-4">
+          <h3 className="font-display text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+            <Target className="w-5 h-5 text-primary" /> Meta do Dia
+          </h3>
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-1">Meta do Dia</p>
+              <p className="text-sm font-bold text-primary">
+                {metaDoDia.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-1">Vendido Hoje</p>
+              <p className="text-sm font-bold text-green">
+                {vendidoHoje.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-1">Resultado</p>
+              {(() => {
+                const resultado = vendidoHoje - metaDoDia;
+                if (resultado < 0) {
+                  return (
+                    <p className="text-sm font-bold text-coral">
+                      -{Math.abs(resultado).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </p>
+                  );
+                }
+                return (
+                  <p className="text-sm font-bold text-green">
+                    +{resultado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </p>
+                );
+              })()}
+            </div>
+          </div>
+          {/* Status message */}
+          {(() => {
+            const resultado = vendidoHoje - metaDoDia;
+            if (resultado < 0) {
+              return (
+                <div className="text-center p-2 rounded-lg bg-coral/10 border border-coral/30">
+                  <p className="text-xs text-coral font-medium">
+                    Faltam {Math.abs(resultado).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} para bater a meta
+                  </p>
+                </div>
+              );
+            }
+            if (resultado === 0 && metaDoDia > 0) {
+              return (
+                <div className="text-center p-2 rounded-lg bg-green/10 border border-green/30">
+                  <p className="text-xs text-green font-medium">✅ Meta do dia atingida!</p>
+                </div>
+              );
+            }
+            if (resultado > 0) {
+              return (
+                <div className="text-center p-2 rounded-lg bg-green/10 border border-green/30">
+                  <p className="text-xs text-green font-medium">
+                    🚀 Acima da meta em {resultado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </p>
+                </div>
+              );
+            }
+            return null;
+          })()}
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="mt-8 text-center">
