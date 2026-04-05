@@ -60,18 +60,26 @@ const DashboardMetas = () => {
       .gte('data', startDate)
       .lte('data', endDate);
 
-    // Aggregate monthly and today per sector
-    const vendasMensalPorSetor = new Map<string, number>();
+    // Separate: previous days vs today (snapshot, not cumulative with past)
+    const vendasDiasAnterioresPorSetor = new Map<string, number>();
     const vendasHojePorSetor = new Map<string, number>();
-    let total = 0;
 
     (vendasRaw || []).forEach((v: any) => {
       const val = Number(v.valor);
-      total += val;
-      vendasMensalPorSetor.set(v.setor_id, (vendasMensalPorSetor.get(v.setor_id) || 0) + val);
       if (v.data === hoje) {
+        // Today's value is a snapshot (last recorded value, overwrites previous)
         vendasHojePorSetor.set(v.setor_id, (vendasHojePorSetor.get(v.setor_id) || 0) + val);
+      } else {
+        // Previous days are consolidated
+        vendasDiasAnterioresPorSetor.set(v.setor_id, (vendasDiasAnterioresPorSetor.get(v.setor_id) || 0) + val);
       }
+    });
+
+    // Total vendido = previous days + today across all sectors
+    let total = 0;
+    const allSetorIds = new Set([...vendasDiasAnterioresPorSetor.keys(), ...vendasHojePorSetor.keys()]);
+    allSetorIds.forEach(sid => {
+      total += (vendasDiasAnterioresPorSetor.get(sid) || 0) + (vendasHojePorSetor.get(sid) || 0);
     });
     setTotalVendido(total);
 
