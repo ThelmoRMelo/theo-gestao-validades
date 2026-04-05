@@ -85,7 +85,7 @@ const DashboardMetas = () => {
 
     const setoresProcessados: SetorData[] = (setoresRaw || []).map((s: any) => {
       const meta = metaTotal * (Number(s.percentual) / 100);
-      const vendido = vendasMensalPorSetor.get(s.id) || 0;
+      const vendido = (vendasDiasAnterioresPorSetor.get(s.id) || 0) + (vendasHojePorSetor.get(s.id) || 0);
       const vendaHoje = vendasHojePorSetor.get(s.id) || 0;
       const falta = Math.max(0, meta - vendido);
       const metaDiaria = diasRestantes > 0 ? falta / diasRestantes : 0;
