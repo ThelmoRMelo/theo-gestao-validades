@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import HistoricoVendasSetor from '@/components/HistoricoVendasSetor';
 
 const MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -316,6 +317,9 @@ const GestaoMetas = () => {
             As metas anuais podem ser ajustadas indefinidamente.
           </p>
         </div>
+
+        {/* Histórico de Vendas por Setor */}
+        <HistoricoVendasSetor />
       </div>
 
       {/* Dialog Setor */}
