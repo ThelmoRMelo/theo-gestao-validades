@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Target, TrendingUp, TrendingDown, Trophy, AlertTriangle, DollarSign, BarChart3 } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { Target, Trophy, AlertTriangle, BarChart3, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SetorData {
@@ -13,18 +13,42 @@ interface SetorData {
   metaDiaria: number;
 }
 
+const MESES_NOMES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
+
+const DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+
+const fmtDateLabel = (d: Date) => {
+  const dia = String(d.getDate()).padStart(2, '0');
+  const mes = MESES_NOMES[d.getMonth()];
+  const semana = DIAS_SEMANA[d.getDay()];
+  return `${semana}, ${dia} de ${mes}`;
+};
+
+const toYMD = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const isSameDay = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
 const DashboardMetas = () => {
+  const [dataSelecionada, setDataSelecionada] = useState(() => new Date());
   const [metaGeral, setMetaGeral] = useState(0);
   const [totalVendido, setTotalVendido] = useState(0);
   const [setoresData, setSetoresData] = useState<SetorData[]>([]);
   const [loading, setLoading] = useState(true);
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
-  const now = new Date();
-  const mesAtual = now.getMonth() + 1;
-  const anoAtual = now.getFullYear();
-  const diaAtual = now.getDate();
-  const diasNoMes = new Date(anoAtual, mesAtual, 0).getDate();
-  const diasRestantes = diasNoMes - diaAtual;
+  const hoje = useMemo(() => new Date(), []);
+  const isHoje = isSameDay(dataSelecionada, hoje);
+
+  const mesRef = dataSelecionada.getMonth() + 1;
+  const anoRef = dataSelecionada.getFullYear();
+  const diaRef = dataSelecionada.getDate();
+  const diasNoMes = new Date(anoRef, mesRef, 0).getDate();
+  const diasRestantes = diasNoMes - diaRef;
 
   const percentualAtingido = metaGeral > 0 ? (totalVendido / metaGeral) * 100 : 0;
   const faltaParaMeta = Math.max(0, metaGeral - totalVendido);
@@ -33,12 +57,37 @@ const DashboardMetas = () => {
   const metaDoDia = diasRestantes > 0 ? faltaParaMeta / diasRestantes : 0;
   const resultadoDia = vendidoHoje - metaDoDia;
 
+  const voltarDia = () => {
+    setDataSelecionada(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() - 1);
+      return d;
+    });
+  };
+
+  const avancarDia = () => {
+    if (isHoje) return;
+    setDataSelecionada(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + 1);
+      const now = new Date();
+      return d > now ? now : d;
+    });
+  };
+
+  const onDatePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.value) return;
+    const picked = new Date(e.target.value + 'T12:00:00');
+    const now = new Date();
+    setDataSelecionada(picked > now ? now : picked);
+  };
+
   const loadData = useCallback(async () => {
     const { data: metaData } = await supabase
       .from('metas_mensais')
       .select('meta_total')
-      .eq('ano', anoAtual)
-      .eq('mes', mesAtual)
+      .eq('ano', anoRef)
+      .eq('mes', mesRef)
       .maybeSingle();
 
     const metaTotal = metaData ? Number(metaData.meta_total) : 0;
@@ -50,9 +99,9 @@ const DashboardMetas = () => {
       .eq('ativo', true)
       .order('nome');
 
-    const startDate = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-01`;
-    const endDate = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-${String(diasNoMes).padStart(2, '0')}`;
-    const hoje = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-${String(diaAtual).padStart(2, '0')}`;
+    const startDate = `${anoRef}-${String(mesRef).padStart(2, '0')}-01`;
+    const endDate = `${anoRef}-${String(mesRef).padStart(2, '0')}-${String(diasNoMes).padStart(2, '0')}`;
+    const dataRef = toYMD(dataSelecionada);
 
     const { data: vendasRaw } = await supabase
       .from('metas_vendas')
@@ -60,42 +109,37 @@ const DashboardMetas = () => {
       .gte('data', startDate)
       .lte('data', endDate);
 
-    // Separate: previous days vs today (snapshot, not cumulative with past)
-    const vendasDiasAnterioresPorSetor = new Map<string, number>();
-    const vendasHojePorSetor = new Map<string, number>();
+    const vendasAnterioresPorSetor = new Map<string, number>();
+    const vendasDiaPorSetor = new Map<string, number>();
 
     (vendasRaw || []).forEach((v: any) => {
       const val = Number(v.valor);
-      if (v.data === hoje) {
-        // Today's value is a snapshot (last recorded value, overwrites previous)
-        vendasHojePorSetor.set(v.setor_id, (vendasHojePorSetor.get(v.setor_id) || 0) + val);
-      } else {
-        // Previous days are consolidated
-        vendasDiasAnterioresPorSetor.set(v.setor_id, (vendasDiasAnterioresPorSetor.get(v.setor_id) || 0) + val);
+      if (v.data === dataRef) {
+        vendasDiaPorSetor.set(v.setor_id, (vendasDiaPorSetor.get(v.setor_id) || 0) + val);
+      } else if (v.data < dataRef) {
+        vendasAnterioresPorSetor.set(v.setor_id, (vendasAnterioresPorSetor.get(v.setor_id) || 0) + val);
       }
     });
 
-    // Total vendido = previous days + today across all sectors
     let total = 0;
-    const allSetorIds = new Set([...vendasDiasAnterioresPorSetor.keys(), ...vendasHojePorSetor.keys()]);
+    const allSetorIds = new Set([...vendasAnterioresPorSetor.keys(), ...vendasDiaPorSetor.keys()]);
     allSetorIds.forEach(sid => {
-      total += (vendasDiasAnterioresPorSetor.get(sid) || 0) + (vendasHojePorSetor.get(sid) || 0);
+      total += (vendasAnterioresPorSetor.get(sid) || 0) + (vendasDiaPorSetor.get(sid) || 0);
     });
     setTotalVendido(total);
 
     const setoresProcessados: SetorData[] = (setoresRaw || []).map((s: any) => {
       const meta = metaTotal * (Number(s.percentual) / 100);
-      const vendido = (vendasDiasAnterioresPorSetor.get(s.id) || 0) + (vendasHojePorSetor.get(s.id) || 0);
-      const vendaHoje = vendasHojePorSetor.get(s.id) || 0;
+      const vendido = (vendasAnterioresPorSetor.get(s.id) || 0) + (vendasDiaPorSetor.get(s.id) || 0);
+      const vendaHoje = vendasDiaPorSetor.get(s.id) || 0;
       const falta = Math.max(0, meta - vendido);
       const metaDiaria = diasRestantes > 0 ? falta / diasRestantes : 0;
-
       return { id: s.id, nome: s.nome, percentual: Number(s.percentual), meta, vendido, vendaHoje, falta, metaDiaria };
     });
 
     setSetoresData(setoresProcessados);
     setLoading(false);
-  }, [anoAtual, mesAtual, diasNoMes, diasRestantes, diaAtual]);
+  }, [anoRef, mesRef, diasNoMes, diasRestantes, dataSelecionada]);
 
   useEffect(() => {
     loadData();
@@ -124,12 +168,58 @@ const DashboardMetas = () => {
 
   return (
     <div className="min-h-screen bg-background p-4 pb-8">
-      <header className="text-center mb-6">
+      <header className="text-center mb-4">
         <h1 className="font-display text-xl font-bold text-primary">Painel de Metas</h1>
         <p className="text-muted-foreground text-sm">
-          Dia Atual: {diaAtual} de {MESES_NOMES[mesAtual - 1]}
+          Dia Atual: {hoje.getDate()} de {MESES_NOMES[hoje.getMonth()]}
         </p>
       </header>
+
+      {/* Date Navigation */}
+      <div className="glass-card flex items-center justify-between px-3 py-3 mb-4">
+        <button
+          onClick={voltarDia}
+          className="flex items-center justify-center w-10 h-10 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+
+        <span className="text-foreground font-semibold text-sm sm:text-base text-center flex-1 mx-2">
+          {fmtDateLabel(dataSelecionada)}
+        </span>
+
+        <button
+          onClick={avancarDia}
+          disabled={isHoje}
+          className="flex items-center justify-center w-10 h-10 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+
+        <button
+          onClick={() => dateInputRef.current?.showPicker()}
+          className="flex items-center justify-center w-10 h-10 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors ml-2"
+        >
+          <CalendarDays className="w-5 h-5" />
+        </button>
+        <input
+          ref={dateInputRef}
+          type="date"
+          className="sr-only"
+          max={toYMD(hoje)}
+          value={toYMD(dataSelecionada)}
+          onChange={onDatePick}
+        />
+      </div>
+
+      {/* Historic indicator */}
+      {!isHoje && (
+        <div className="text-center mb-3">
+          <span className="text-xs text-yellow bg-yellow/10 border border-yellow/30 rounded-full px-3 py-1">
+            📜 Visualizando histórico
+          </span>
+        </div>
+      )}
 
       {/* Summary Cards - Row 1 */}
       <div className="grid grid-cols-3 gap-3 mb-3">
@@ -155,7 +245,7 @@ const DashboardMetas = () => {
           <p className="text-lg font-bold text-primary">{fmt(metaDoDia)}</p>
         </div>
         <div className="glass-card p-3 text-center">
-          <p className="text-xs text-muted-foreground mb-1">Vendido Hoje</p>
+          <p className="text-xs text-muted-foreground mb-1">{isHoje ? 'Vendido Hoje' : 'Vendido no Dia'}</p>
           <p className="text-lg font-bold text-green">{fmt(vendidoHoje)}</p>
         </div>
         <div className="glass-card p-3 text-center">
@@ -180,7 +270,7 @@ const DashboardMetas = () => {
         <div className="w-full h-3 bg-secondary rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${
-              percentualAtingido >= 100 ? 'bg-green' : percentualAtingido >= (diaAtual / diasNoMes) * 100 ? 'bg-green' : percentualAtingido >= (diaAtual / diasNoMes) * 70 ? 'bg-yellow' : 'bg-coral'
+              percentualAtingido >= 100 ? 'bg-green' : percentualAtingido >= (diaRef / diasNoMes) * 100 ? 'bg-green' : percentualAtingido >= (diaRef / diasNoMes) * 70 ? 'bg-yellow' : 'bg-coral'
             }`}
             style={{ width: `${Math.min(100, percentualAtingido)}%` }}
           />
@@ -201,7 +291,7 @@ const DashboardMetas = () => {
                 <th className="text-right py-2 text-muted-foreground font-medium">Vendido</th>
                 <th className="text-right py-2 text-muted-foreground font-medium">Falta</th>
                 <th className="text-right py-2 text-muted-foreground font-medium">Meta/Dia</th>
-                <th className="text-right py-2 text-muted-foreground font-medium">Venda/Hoje</th>
+                <th className="text-right py-2 text-muted-foreground font-medium">{isHoje ? 'Venda/Hoje' : 'Venda/Dia'}</th>
               </tr>
             </thead>
             <tbody>
@@ -246,7 +336,7 @@ const DashboardMetas = () => {
           <div className="space-y-2">
             {setoresData.filter(s => {
               const progresso = s.meta > 0 ? (s.vendido / s.meta) * 100 : 0;
-              return progresso < (diaAtual / diasNoMes) * 70;
+              return progresso < (diaRef / diasNoMes) * 70;
             }).map(s => (
               <div key={s.id} className="p-2 rounded-lg bg-coral/10 border border-coral/30 text-sm">
                 <span className="text-coral font-medium">⚠️ {s.nome}</span>
@@ -255,7 +345,7 @@ const DashboardMetas = () => {
             ))}
             {setoresData.filter(s => {
               const progresso = s.meta > 0 ? (s.vendido / s.meta) * 100 : 0;
-              return progresso < (diaAtual / diasNoMes) * 70;
+              return progresso < (diaRef / diasNoMes) * 70;
             }).length === 0 && (
               <p className="text-sm text-muted-foreground">Todos os setores estão dentro da meta 👍</p>
             )}
@@ -269,10 +359,5 @@ const DashboardMetas = () => {
     </div>
   );
 };
-
-const MESES_NOMES = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-];
 
 export default DashboardMetas;
