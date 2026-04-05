@@ -317,6 +317,9 @@ const GestaoMetas = () => {
             As metas anuais podem ser ajustadas indefinidamente.
           </p>
         </div>
+
+        {/* Histórico de Vendas por Setor */}
+        <HistoricoVendasSetor />
       </div>
 
       {/* Dialog Setor */}
