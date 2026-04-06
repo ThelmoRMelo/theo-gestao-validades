@@ -51,6 +51,11 @@ const GestaoMetas = () => {
   const [editingSetor, setEditingSetor] = useState<MetaSetor | null>(null);
   const [setorNome, setSetorNome] = useState('');
   const [setorPercentual, setSetorPercentual] = useState('');
+  const [setorValor, setSetorValor] = useState('');
+  const [lastEditedField, setLastEditedField] = useState<'valor' | 'percentual' | null>(null);
+
+  // Meta do mês atual para cálculo bidirecional
+  const metaMesAtual = metas[new Date().getMonth()]?.meta_total || 0;
 
   const totalPercentual = setores.filter(s => s.ativo).reduce((sum, s) => sum + s.percentual, 0);
 
