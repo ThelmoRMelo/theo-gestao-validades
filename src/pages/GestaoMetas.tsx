@@ -196,6 +196,9 @@ const GestaoMetas = () => {
     setEditingSetor(s);
     setSetorNome(s.nome);
     setSetorPercentual(s.percentual.toString());
+    const valorCalc = metaMesAtual > 0 ? metaMesAtual * (s.percentual / 100) : 0;
+    setSetorValor(valorCalc > 0 ? formatToBRL(valorCalc) : '');
+    setLastEditedField(null);
     setShowSetorDialog(true);
   };
 
@@ -203,7 +206,41 @@ const GestaoMetas = () => {
     setEditingSetor(null);
     setSetorNome('');
     setSetorPercentual('');
+    setSetorValor('');
+    setLastEditedField(null);
     setShowSetorDialog(true);
+  };
+
+  const handleSetorValorChange = (value: string) => {
+    setSetorValor(value);
+    setLastEditedField('valor');
+    if (metaMesAtual > 0) {
+      const numVal = parseBRLToNumber(value);
+      const perc = (numVal / metaMesAtual) * 100;
+      setSetorPercentual(perc > 0 ? perc.toFixed(2) : '');
+    }
+  };
+
+  const handleSetorPercentualChange = (value: string) => {
+    setSetorPercentual(value);
+    setLastEditedField('percentual');
+    if (metaMesAtual > 0) {
+      const perc = parseFloat(value) || 0;
+      const val = metaMesAtual * (perc / 100);
+      setSetorValor(val > 0 ? formatToBRL(val) : '');
+    }
+  };
+
+  const handleSetorValorBlur = () => {
+    const numVal = parseBRLToNumber(setorValor);
+    setSetorValor(numVal > 0 ? formatToBRL(numVal) : '');
+  };
+
+  const handleSetorValorFocus = () => {
+    const numVal = parseBRLToNumber(setorValor);
+    if (numVal > 0) {
+      setSetorValor(numVal.toString().replace('.', ','));
+    }
   };
 
   const toggleSetorAtivo = async (setor: MetaSetor) => {
