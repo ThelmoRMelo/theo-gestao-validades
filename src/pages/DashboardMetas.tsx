@@ -282,31 +282,34 @@ const DashboardMetas = () => {
         <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
           <BarChart3 className="w-5 h-5 text-primary" /> Desempenho por Setor
         </h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-2 text-muted-foreground font-medium">Setor</th>
-                <th className="text-right py-2 text-muted-foreground font-medium">Meta</th>
-                <th className="text-right py-2 text-muted-foreground font-medium">Vendido</th>
-                <th className="text-right py-2 text-muted-foreground font-medium">Falta</th>
-                <th className="text-right py-2 text-muted-foreground font-medium">Meta/Dia</th>
-                <th className="text-right py-2 text-muted-foreground font-medium">{isHoje ? 'Venda/Hoje' : 'Venda/Dia'}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {setoresData.map(s => (
-                <tr key={s.id} className="border-b border-border/50">
-                  <td className="py-2 text-foreground">{s.nome}</td>
-                  <td className="py-2 text-right text-foreground">{fmt(s.meta)}</td>
-                  <td className="py-2 text-right text-green">{fmt(s.vendido)}</td>
-                  <td className="py-2 text-right text-coral">{fmt(s.falta)}</td>
-                  <td className="py-2 text-right text-foreground">{fmt(s.metaDiaria)}</td>
-                  <td className="py-2 text-right font-bold text-primary">{fmt(s.vendaHoje)}</td>
+        <div className="relative">
+          <div className="overflow-x-auto scroll-smooth -mx-4 px-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <table className="w-full text-sm" style={{ minWidth: '740px' }}>
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 text-muted-foreground font-medium whitespace-nowrap" style={{ minWidth: '140px' }}>Setor</th>
+                  <th className="text-right py-2 text-muted-foreground font-medium whitespace-nowrap" style={{ minWidth: '120px' }}>Meta</th>
+                  <th className="text-right py-2 text-muted-foreground font-medium whitespace-nowrap" style={{ minWidth: '120px' }}>Vendido</th>
+                  <th className="text-right py-2 text-muted-foreground font-medium whitespace-nowrap" style={{ minWidth: '120px' }}>Falta</th>
+                  <th className="text-right py-2 text-muted-foreground font-medium whitespace-nowrap" style={{ minWidth: '120px' }}>Meta/Dia</th>
+                  <th className="text-right py-2 text-muted-foreground font-medium whitespace-nowrap" style={{ minWidth: '120px' }}>{isHoje ? 'Venda/Hoje' : 'Venda/Dia'}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {setoresData.map(s => (
+                  <tr key={s.id} className="border-b border-border/50">
+                    <td className="py-2 text-foreground whitespace-nowrap">{s.nome}</td>
+                    <td className="py-2 text-right text-foreground whitespace-nowrap">{fmt(s.meta)}</td>
+                    <td className="py-2 text-right text-green whitespace-nowrap">{fmt(s.vendido)}</td>
+                    <td className="py-2 text-right text-coral whitespace-nowrap">{fmt(s.falta)}</td>
+                    <td className="py-2 text-right text-foreground whitespace-nowrap">{fmt(s.metaDiaria)}</td>
+                    <td className="py-2 text-right font-bold text-primary whitespace-nowrap">{fmt(s.vendaHoje)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="absolute right-0 top-0 bottom-0 w-6 pointer-events-none bg-gradient-to-l from-card to-transparent md:hidden" />
         </div>
       </div>
 
