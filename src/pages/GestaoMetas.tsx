@@ -51,6 +51,11 @@ const GestaoMetas = () => {
   const [editingSetor, setEditingSetor] = useState<MetaSetor | null>(null);
   const [setorNome, setSetorNome] = useState('');
   const [setorPercentual, setSetorPercentual] = useState('');
+  const [setorValor, setSetorValor] = useState('');
+  const [lastEditedField, setLastEditedField] = useState<'valor' | 'percentual' | null>(null);
+
+  // Meta do mês atual para cálculo bidirecional
+  const metaMesAtual = metas[new Date().getMonth()]?.meta_total || 0;
 
   const totalPercentual = setores.filter(s => s.ativo).reduce((sum, s) => sum + s.percentual, 0);
 
@@ -191,6 +196,9 @@ const GestaoMetas = () => {
     setEditingSetor(s);
     setSetorNome(s.nome);
     setSetorPercentual(s.percentual.toString());
+    const valorCalc = metaMesAtual > 0 ? metaMesAtual * (s.percentual / 100) : 0;
+    setSetorValor(valorCalc > 0 ? formatToBRL(valorCalc) : '');
+    setLastEditedField(null);
     setShowSetorDialog(true);
   };
 
@@ -198,7 +206,41 @@ const GestaoMetas = () => {
     setEditingSetor(null);
     setSetorNome('');
     setSetorPercentual('');
+    setSetorValor('');
+    setLastEditedField(null);
     setShowSetorDialog(true);
+  };
+
+  const handleSetorValorChange = (value: string) => {
+    setSetorValor(value);
+    setLastEditedField('valor');
+    if (metaMesAtual > 0) {
+      const numVal = parseBRLToNumber(value);
+      const perc = (numVal / metaMesAtual) * 100;
+      setSetorPercentual(perc > 0 ? perc.toFixed(2) : '');
+    }
+  };
+
+  const handleSetorPercentualChange = (value: string) => {
+    setSetorPercentual(value);
+    setLastEditedField('percentual');
+    if (metaMesAtual > 0) {
+      const perc = parseFloat(value) || 0;
+      const val = metaMesAtual * (perc / 100);
+      setSetorValor(val > 0 ? formatToBRL(val) : '');
+    }
+  };
+
+  const handleSetorValorBlur = () => {
+    const numVal = parseBRLToNumber(setorValor);
+    setSetorValor(numVal > 0 ? formatToBRL(numVal) : '');
+  };
+
+  const handleSetorValorFocus = () => {
+    const numVal = parseBRLToNumber(setorValor);
+    if (numVal > 0) {
+      setSetorValor(numVal.toString().replace('.', ','));
+    }
   };
 
   const toggleSetorAtivo = async (setor: MetaSetor) => {
@@ -333,10 +375,44 @@ const GestaoMetas = () => {
               <label className="text-sm text-muted-foreground">Nome</label>
               <Input value={setorNome} onChange={e => setSetorNome(e.target.value)} placeholder="Nome do setor" className="mt-1" />
             </div>
+
+            {metaMesAtual <= 0 && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-coral/10 border border-coral/30">
+                <AlertTriangle className="w-4 h-4 text-coral shrink-0" />
+                <span className="text-xs text-coral">Defina a meta mensal antes de cadastrar setores</span>
+              </div>
+            )}
+
+            <div>
+              <label className="text-sm text-muted-foreground">Meta do Setor (R$)</label>
+              <div className="flex items-center gap-1 mt-1">
+                <span className="text-xs text-muted-foreground">R$</span>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={setorValor}
+                  onChange={e => handleSetorValorChange(e.target.value)}
+                  onBlur={handleSetorValorBlur}
+                  onFocus={handleSetorValorFocus}
+                  placeholder="0,00"
+                  disabled={metaMesAtual <= 0}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="text-sm text-muted-foreground">Percentual (%)</label>
-              <Input type="number" value={setorPercentual} onChange={e => setSetorPercentual(e.target.value)} placeholder="0" className="mt-1" />
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={setorPercentual}
+                onChange={e => handleSetorPercentualChange(e.target.value)}
+                placeholder="0"
+                className="mt-1"
+              />
             </div>
+
             <Button onClick={handleSaveSetor} className="w-full">
               <Check className="w-4 h-4 mr-2" /> Salvar
             </Button>
