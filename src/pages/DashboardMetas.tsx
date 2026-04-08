@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Target, Trophy, AlertTriangle, BarChart3, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { Target, Trophy, AlertTriangle, BarChart3, ChevronLeft, ChevronRight, CalendarDays, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { exportMetasToExcel, exportMetasToPDF } from '@/lib/exportMetasUtils';
+import { toast } from 'sonner';
 
 interface SetorData {
   id: string;
