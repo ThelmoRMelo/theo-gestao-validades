@@ -374,19 +374,13 @@ const DashboardMetas = () => {
             <AlertTriangle className="w-5 h-5 text-coral" /> Alertas
           </h3>
           <div className="space-y-2">
-            {setoresData.filter(s => {
-              const progresso = s.meta > 0 ? (s.vendido / s.meta) * 100 : 0;
-              return progresso < (diaRef / diasNoMes) * 70;
-            }).map(s => (
+            {alertas.map(s => (
               <div key={s.id} className="p-2 rounded-lg bg-coral/10 border border-coral/30 text-sm">
                 <span className="text-coral font-medium">⚠️ {s.nome}</span>
                 <span className="text-muted-foreground"> está abaixo do esperado!</span>
               </div>
             ))}
-            {setoresData.filter(s => {
-              const progresso = s.meta > 0 ? (s.vendido / s.meta) * 100 : 0;
-              return progresso < (diaRef / diasNoMes) * 70;
-            }).length === 0 && (
+            {alertas.length === 0 && (
               <p className="text-sm text-muted-foreground">Todos os setores estão dentro da meta 👍</p>
             )}
           </div>
