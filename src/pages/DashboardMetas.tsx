@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Target, Trophy, AlertTriangle, BarChart3, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { Target, Trophy, AlertTriangle, BarChart3, ChevronLeft, ChevronRight, CalendarDays, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { exportMetasToExcel, exportMetasToPDF } from '@/lib/exportMetasUtils';
+import { toast } from 'sonner';
 
 interface SetorData {
   id: string;
@@ -154,6 +156,25 @@ const DashboardMetas = () => {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const ranking = [...setoresData].sort((a, b) => b.vendido - a.vendido);
+  const alertas = setoresData.filter(s => {
+    const progresso = s.meta > 0 ? (s.vendido / s.meta) * 100 : 0;
+    return progresso < (diaRef / diasNoMes) * 70;
+  });
+
+  const handleExport = (format: 'excel' | 'pdf') => {
+    try {
+      toast.info('Exportando relatório...');
+      const exportData = {
+        dataSelecionada, metaGeral, totalVendido, percentualAtingido, faltaParaMeta,
+        metaDoDia, vendidoHoje, resultadoDia, diasNoMes, diaRef, setoresData, ranking, alertas,
+      };
+      if (format === 'excel') exportMetasToExcel(exportData);
+      else exportMetasToPDF(exportData);
+      toast.success('Exportação concluída com sucesso!');
+    } catch {
+      toast.error('Falha ao gerar relatório');
+    }
+  };
 
   if (loading) {
     return (
@@ -169,7 +190,26 @@ const DashboardMetas = () => {
   return (
     <div className="min-h-screen bg-background p-4 pb-8">
       <header className="text-center mb-4">
-        <h1 className="font-display text-xl font-bold text-primary">Painel de Metas</h1>
+        <div className="flex items-center justify-between mb-1">
+          <div className="w-10" />
+          <h1 className="font-display text-xl font-bold text-primary">Painel de Metas</h1>
+          <div className="flex gap-1">
+            <button
+              onClick={() => handleExport('excel')}
+              className="flex items-center justify-center w-10 h-10 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors"
+              title="Exportar Excel"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => handleExport('pdf')}
+              className="flex items-center justify-center w-10 h-10 rounded-lg border border-coral/30 text-coral hover:bg-coral/10 transition-colors"
+              title="Exportar PDF"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
         <p className="text-muted-foreground text-sm">
           Dia Atual: {hoje.getDate()} de {MESES_NOMES[hoje.getMonth()]}
         </p>
@@ -334,19 +374,13 @@ const DashboardMetas = () => {
             <AlertTriangle className="w-5 h-5 text-coral" /> Alertas
           </h3>
           <div className="space-y-2">
-            {setoresData.filter(s => {
-              const progresso = s.meta > 0 ? (s.vendido / s.meta) * 100 : 0;
-              return progresso < (diaRef / diasNoMes) * 70;
-            }).map(s => (
+            {alertas.map(s => (
               <div key={s.id} className="p-2 rounded-lg bg-coral/10 border border-coral/30 text-sm">
                 <span className="text-coral font-medium">⚠️ {s.nome}</span>
                 <span className="text-muted-foreground"> está abaixo do esperado!</span>
               </div>
             ))}
-            {setoresData.filter(s => {
-              const progresso = s.meta > 0 ? (s.vendido / s.meta) * 100 : 0;
-              return progresso < (diaRef / diasNoMes) * 70;
-            }).length === 0 && (
+            {alertas.length === 0 && (
               <p className="text-sm text-muted-foreground">Todos os setores estão dentro da meta 👍</p>
             )}
           </div>
