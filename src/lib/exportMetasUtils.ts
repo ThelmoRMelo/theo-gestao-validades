@@ -189,7 +189,9 @@ export const exportMetasToPDF = (data: MetasDashboardData) => {
     styles: { fontSize: 8, cellPadding: 2, textColor: [200, 200, 200], fillColor: [25, 25, 40], lineColor: [50, 50, 70], lineWidth: 0.3 },
     headStyles: { fillColor: [0, 130, 130], textColor: [255, 255, 255], fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [30, 30, 50] },
-    willDrawPage: () => fillPage(),
+    willDrawPage: (hookData) => {
+      if (hookData.pageNumber > 1) fillPage();
+    },
   });
 
   let nextY = (doc as any).lastAutoTable.finalY + 10;
@@ -210,7 +212,6 @@ export const exportMetasToPDF = (data: MetasDashboardData) => {
     styles: { fontSize: 8, cellPadding: 2, textColor: [200, 200, 200], fillColor: [25, 25, 40], lineColor: [50, 50, 70], lineWidth: 0.3 },
     headStyles: { fillColor: [180, 150, 0], textColor: [255, 255, 255], fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [30, 30, 50] },
-    willDrawPage: () => fillPage(),
   });
 
   nextY = (doc as any).lastAutoTable.finalY + 10;
@@ -231,7 +232,6 @@ export const exportMetasToPDF = (data: MetasDashboardData) => {
       theme: 'grid',
       styles: { fontSize: 8, cellPadding: 2, textColor: [255, 150, 150], fillColor: [50, 20, 20], lineColor: [80, 40, 40], lineWidth: 0.3 },
       headStyles: { fillColor: [150, 30, 30], textColor: [255, 255, 255], fontStyle: 'bold' },
-      willDrawPage: () => fillPage(),
     });
   } else {
     doc.setFontSize(9);
