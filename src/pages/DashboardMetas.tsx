@@ -156,6 +156,25 @@ const DashboardMetas = () => {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const ranking = [...setoresData].sort((a, b) => b.vendido - a.vendido);
+  const alertas = setoresData.filter(s => {
+    const progresso = s.meta > 0 ? (s.vendido / s.meta) * 100 : 0;
+    return progresso < (diaRef / diasNoMes) * 70;
+  });
+
+  const handleExport = (format: 'excel' | 'pdf') => {
+    try {
+      toast.info('Exportando relatório...');
+      const exportData = {
+        dataSelecionada, metaGeral, totalVendido, percentualAtingido, faltaParaMeta,
+        metaDoDia, vendidoHoje, resultadoDia, diasNoMes, diaRef, setoresData, ranking, alertas,
+      };
+      if (format === 'excel') exportMetasToExcel(exportData);
+      else exportMetasToPDF(exportData);
+      toast.success('Exportação concluída com sucesso!');
+    } catch {
+      toast.error('Falha ao gerar relatório');
+    }
+  };
 
   if (loading) {
     return (
