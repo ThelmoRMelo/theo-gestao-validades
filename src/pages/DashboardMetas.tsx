@@ -382,6 +382,33 @@ const DashboardMetas = () => {
       <footer className="mt-8 text-center">
         <p className="text-xs text-muted-foreground">Dashboard atualizado em tempo real</p>
       </footer>
+
+      {/* Export Modal */}
+      {exportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setExportModalOpen(false)}>
+          <div className="glass-card p-6 mx-4 w-full max-w-xs space-y-3" onClick={e => e.stopPropagation()}>
+            <h3 className="text-foreground font-semibold text-center text-lg mb-4">Exportar Relatório</h3>
+            <button
+              onClick={() => { setExportModalOpen(false); handleExport('pdf'); }}
+              className="w-full py-3 rounded-lg bg-coral/20 border border-coral/40 text-coral font-semibold hover:bg-coral/30 transition-colors"
+            >
+              📄 Exportar PDF
+            </button>
+            <button
+              onClick={() => { setExportModalOpen(false); handleExport('excel'); }}
+              className="w-full py-3 rounded-lg bg-green/20 border border-green/40 text-green font-semibold hover:bg-green/30 transition-colors"
+            >
+              📊 Exportar Excel
+            </button>
+            <button
+              onClick={() => setExportModalOpen(false)}
+              className="w-full py-2 rounded-lg text-muted-foreground text-sm hover:text-foreground transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
