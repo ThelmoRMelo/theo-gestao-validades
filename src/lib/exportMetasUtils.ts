@@ -231,7 +231,7 @@ export const exportMetasToPDF = (data: MetasDashboardData) => {
       theme: 'grid',
       styles: { fontSize: 8, cellPadding: 2, textColor: [255, 150, 150], fillColor: [50, 20, 20], lineColor: [80, 40, 40], lineWidth: 0.3 },
       headStyles: { fillColor: [150, 30, 30], textColor: [255, 255, 255], fontStyle: 'bold' },
-      didDrawPage: () => fillPage(),
+      willDrawPage: () => fillPage(),
     });
   } else {
     doc.setFontSize(9);
