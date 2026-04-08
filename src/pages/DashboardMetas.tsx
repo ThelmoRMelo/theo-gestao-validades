@@ -190,7 +190,26 @@ const DashboardMetas = () => {
   return (
     <div className="min-h-screen bg-background p-4 pb-8">
       <header className="text-center mb-4">
-        <h1 className="font-display text-xl font-bold text-primary">Painel de Metas</h1>
+        <div className="flex items-center justify-between mb-1">
+          <div className="w-10" />
+          <h1 className="font-display text-xl font-bold text-primary">Painel de Metas</h1>
+          <div className="flex gap-1">
+            <button
+              onClick={() => handleExport('excel')}
+              className="flex items-center justify-center w-10 h-10 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors"
+              title="Exportar Excel"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => handleExport('pdf')}
+              className="flex items-center justify-center w-10 h-10 rounded-lg border border-coral/30 text-coral hover:bg-coral/10 transition-colors"
+              title="Exportar PDF"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
         <p className="text-muted-foreground text-sm">
           Dia Atual: {hoje.getDate()} de {MESES_NOMES[hoje.getMonth()]}
         </p>
