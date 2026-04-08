@@ -41,6 +41,7 @@ const DashboardMetas = () => {
   const [totalVendido, setTotalVendido] = useState(0);
   const [setoresData, setSetoresData] = useState<SetorData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   const hoje = useMemo(() => new Date(), []);
@@ -193,22 +194,13 @@ const DashboardMetas = () => {
         <div className="flex items-center justify-between mb-1">
           <div className="w-10" />
           <h1 className="font-display text-xl font-bold text-primary">Painel de Metas</h1>
-          <div className="flex gap-1">
-            <button
-              onClick={() => handleExport('excel')}
+          <button
+              onClick={() => setExportModalOpen(true)}
               className="flex items-center justify-center w-10 h-10 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors"
-              title="Exportar Excel"
+              title="Exportar"
             >
               <Download className="w-5 h-5" />
             </button>
-            <button
-              onClick={() => handleExport('pdf')}
-              className="flex items-center justify-center w-10 h-10 rounded-lg border border-coral/30 text-coral hover:bg-coral/10 transition-colors"
-              title="Exportar PDF"
-            >
-              <Download className="w-5 h-5" />
-            </button>
-          </div>
         </div>
         <p className="text-muted-foreground text-sm">
           Dia Atual: {hoje.getDate()} de {MESES_NOMES[hoje.getMonth()]}
@@ -390,6 +382,33 @@ const DashboardMetas = () => {
       <footer className="mt-8 text-center">
         <p className="text-xs text-muted-foreground">Dashboard atualizado em tempo real</p>
       </footer>
+
+      {/* Export Modal */}
+      {exportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setExportModalOpen(false)}>
+          <div className="glass-card p-6 mx-4 w-full max-w-xs space-y-3" onClick={e => e.stopPropagation()}>
+            <h3 className="text-foreground font-semibold text-center text-lg mb-4">Exportar Relatório</h3>
+            <button
+              onClick={() => { setExportModalOpen(false); handleExport('pdf'); }}
+              className="w-full py-3 rounded-lg bg-coral/20 border border-coral/40 text-coral font-semibold hover:bg-coral/30 transition-colors"
+            >
+              📄 Exportar PDF
+            </button>
+            <button
+              onClick={() => { setExportModalOpen(false); handleExport('excel'); }}
+              className="w-full py-3 rounded-lg bg-green/20 border border-green/40 text-green font-semibold hover:bg-green/30 transition-colors"
+            >
+              📊 Exportar Excel
+            </button>
+            <button
+              onClick={() => setExportModalOpen(false)}
+              className="w-full py-2 rounded-lg text-muted-foreground text-sm hover:text-foreground transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
