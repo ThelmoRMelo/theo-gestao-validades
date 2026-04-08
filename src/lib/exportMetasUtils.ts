@@ -210,7 +210,7 @@ export const exportMetasToPDF = (data: MetasDashboardData) => {
     styles: { fontSize: 8, cellPadding: 2, textColor: [200, 200, 200], fillColor: [25, 25, 40], lineColor: [50, 50, 70], lineWidth: 0.3 },
     headStyles: { fillColor: [180, 150, 0], textColor: [255, 255, 255], fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [30, 30, 50] },
-    didDrawPage: () => fillPage(),
+    willDrawPage: () => fillPage(),
   });
 
   nextY = (doc as any).lastAutoTable.finalY + 10;
