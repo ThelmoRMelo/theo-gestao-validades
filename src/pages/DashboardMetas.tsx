@@ -108,6 +108,12 @@ const DashboardMetas = () => {
   };
 
   const loadData = useCallback(async () => {
+    // Load pesos
+    const { data: pesosRaw } = await supabase.from('metas_pesos_semana').select('dia_semana, peso');
+    const pm: Record<number, number> = {};
+    (pesosRaw || []).forEach((r: any) => { pm[r.dia_semana] = Number(r.peso); });
+    setPesosMap(pm);
+
     const { data: metaData } = await supabase
       .from('metas_mensais')
       .select('meta_total')
@@ -153,18 +159,27 @@ const DashboardMetas = () => {
     });
     setTotalVendido(total);
 
+    // Weighted daily calculation helper for setor
+    const getPesoLocal = (d: number) => pm[d] ?? PESOS_DEFAULT[d] ?? 1.0;
+    let somaPesosRestantes = 0;
+    for (let d = diaRef; d <= diasNoMes; d++) {
+      const date = new Date(anoRef, mesRef - 1, d);
+      somaPesosRestantes += getPesoLocal(date.getDay());
+    }
+    const pesoDiaAtual = getPesoLocal(dataSelecionada.getDay());
+
     const setoresProcessados: SetorData[] = (setoresRaw || []).map((s: any) => {
       const meta = metaTotal * (Number(s.percentual) / 100);
       const vendido = (vendasAnterioresPorSetor.get(s.id) || 0) + (vendasDiaPorSetor.get(s.id) || 0);
       const vendaHoje = vendasDiaPorSetor.get(s.id) || 0;
       const falta = Math.max(0, meta - vendido);
-      const metaDiaria = diasRestantes > 0 ? falta / diasRestantes : 0;
+      const metaDiaria = somaPesosRestantes > 0 ? (pesoDiaAtual / somaPesosRestantes) * falta : 0;
       return { id: s.id, nome: s.nome, percentual: Number(s.percentual), meta, vendido, vendaHoje, falta, metaDiaria };
     });
 
     setSetoresData(setoresProcessados);
     setLoading(false);
-  }, [anoRef, mesRef, diasNoMes, diasRestantes, dataSelecionada]);
+  }, [anoRef, mesRef, diasNoMes, diaRef, dataSelecionada]);
 
   useEffect(() => {
     loadData();
