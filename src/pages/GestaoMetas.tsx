@@ -268,104 +268,112 @@ const GestaoMetas = () => {
         </Button>
       </header>
 
-      <div className="px-4 space-y-6 pb-8 overflow-y-auto flex-1">
-        {/* Metas Anuais */}
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display text-lg font-semibold text-foreground">Metas Anuais</h3>
-            <Select value={ano.toString()} onValueChange={v => setAno(Number(v))}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[currentYear - 1, currentYear, currentYear + 1].map(y => (
-                  <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            {MESES.map((nome, i) => (
-              <div key={i} className="flex items-center justify-between gap-3 py-2 border-b border-border/50 last:border-0">
-                <span className="text-sm text-foreground w-20 shrink-0">{nome}</span>
-                <div className="flex items-center gap-1 flex-1 justify-end">
-                  <span className="text-xs text-muted-foreground">R$</span>
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={getMetaDisplay(i + 1, metas[i].meta_total)}
-                    onChange={e => handleMetaChange(i + 1, e.target.value)}
-                    onBlur={() => handleMetaBlur(i + 1)}
-                    onFocus={() => handleMetaFocus(i + 1)}
-                    placeholder="0,00"
-                    className="flex-1 min-w-0 text-right h-8 text-sm"
-                  />
-                </div>
+      <div className="px-4 pb-8 overflow-y-auto flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Metas Anuais - full width on desktop */}
+          <div className="md:col-span-2">
+            <div className="glass-card p-4 h-full">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display text-lg font-semibold text-foreground">Metas Anuais</h3>
+                <Select value={ano.toString()} onValueChange={v => setAno(Number(v))}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[currentYear - 1, currentYear, currentYear + 1].map(y => (
+                      <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Setores e Percentuais */}
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display text-lg font-semibold text-foreground">Setores e Percentuais</h3>
-            <Button size="sm" variant="outline" onClick={openNewSetor}>
-              <Plus className="w-4 h-4 mr-1" /> Novo
-            </Button>
-          </div>
-
-          <div className="space-y-2">
-            {setores.map(s => {
-              const mesAtual = new Date().getMonth();
-              const metaMes = metas[mesAtual]?.meta_total || 0;
-              const metaSetor = s.ativo ? metaMes * (s.percentual / 100) : 0;
-              return (
-                <div key={s.id} className={`flex items-center justify-between gap-2 py-2 border-b border-border/50 last:border-0 ${!s.ativo ? 'opacity-50' : ''}`}>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm text-foreground block">{s.nome}</span>
-                    {s.ativo && metaSetor > 0 && (
-                      <span className="text-xs text-green">Meta: {metaSetor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                    )}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-0">
+                {MESES.map((nome, i) => (
+                  <div key={i} className="flex items-center justify-between gap-3 py-2 border-b border-border/50 last:border-0">
+                    <span className="text-sm text-foreground w-20 shrink-0">{nome}</span>
+                    <div className="flex items-center gap-1 flex-1 justify-end">
+                      <span className="text-xs text-muted-foreground">R$</span>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        value={getMetaDisplay(i + 1, metas[i].meta_total)}
+                        onChange={e => handleMetaChange(i + 1, e.target.value)}
+                        onBlur={() => handleMetaBlur(i + 1)}
+                        onFocus={() => handleMetaFocus(i + 1)}
+                        placeholder="0,00"
+                        className="flex-1 min-w-0 text-right h-8 text-sm"
+                      />
+                    </div>
                   </div>
-                  <span className="text-sm font-bold text-primary shrink-0">{s.percentual}%</span>
-                  <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => openEditSetor(s)}>
-                    <Pencil className="w-3 h-3" />
-                  </Button>
-                  <Switch checked={s.ativo} onCheckedChange={() => toggleSetorAtivo(s)} />
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Total indicator */}
-          <div className={`mt-4 p-3 rounded-lg flex items-center justify-between ${
-            totalPercentual === 100 ? 'bg-green/10 border border-green/30' : 'bg-coral/10 border border-coral/30'
-          }`}>
-            <span className="text-sm font-medium">Total:</span>
-            <span className={`font-bold ${totalPercentual === 100 ? 'text-green' : 'text-coral'}`}>
-              {totalPercentual}%
-            </span>
-          </div>
-          {totalPercentual !== 100 && setores.filter(s => s.ativo).length > 0 && (
-            <div className="mt-2 flex items-center gap-2 text-coral text-xs">
-              <AlertTriangle className="w-4 h-4" />
-              A soma dos percentuais dos setores ativos deve ser igual a 100%
+                ))}
+              </div>
             </div>
-          )}
+          </div>
 
-          <p className="mt-3 text-xs text-muted-foreground">
-            Nota: A soma dos percentuais deve ser igual a 100%.
-            As metas anuais podem ser ajustadas indefinidamente.
-          </p>
+          {/* Setores e Percentuais */}
+          <div className="glass-card p-4 h-full flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display text-lg font-semibold text-foreground">Setores e Percentuais</h3>
+              <Button size="sm" variant="outline" onClick={openNewSetor}>
+                <Plus className="w-4 h-4 mr-1" /> Novo
+              </Button>
+            </div>
+
+            <div className="space-y-2 flex-1 overflow-y-auto max-h-[400px] md:max-h-[500px]">
+              {setores.map(s => {
+                const mesAtual = new Date().getMonth();
+                const metaMes = metas[mesAtual]?.meta_total || 0;
+                const metaSetor = s.ativo ? metaMes * (s.percentual / 100) : 0;
+                return (
+                  <div key={s.id} className={`flex items-center justify-between gap-2 py-2 border-b border-border/50 last:border-0 ${!s.ativo ? 'opacity-50' : ''}`}>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-foreground block">{s.nome}</span>
+                      {s.ativo && metaSetor > 0 && (
+                        <span className="text-xs text-green">Meta: {metaSetor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      )}
+                    </div>
+                    <span className="text-sm font-bold text-primary shrink-0">{s.percentual}%</span>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => openEditSetor(s)}>
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                    <Switch checked={s.ativo} onCheckedChange={() => toggleSetorAtivo(s)} />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Total indicator */}
+            <div className={`mt-4 p-3 rounded-lg flex items-center justify-between ${
+              totalPercentual === 100 ? 'bg-green/10 border border-green/30' : 'bg-coral/10 border border-coral/30'
+            }`}>
+              <span className="text-sm font-medium">Total:</span>
+              <span className={`font-bold ${totalPercentual === 100 ? 'text-green' : 'text-coral'}`}>
+                {totalPercentual}%
+              </span>
+            </div>
+            {totalPercentual !== 100 && setores.filter(s => s.ativo).length > 0 && (
+              <div className="mt-2 flex items-center gap-2 text-coral text-xs">
+                <AlertTriangle className="w-4 h-4" />
+                A soma dos percentuais dos setores ativos deve ser igual a 100%
+              </div>
+            )}
+
+            <p className="mt-3 text-xs text-muted-foreground">
+              Nota: A soma dos percentuais deve ser igual a 100%.
+              As metas anuais podem ser ajustadas indefinidamente.
+            </p>
+          </div>
+
+          {/* Peso dos Dias da Semana */}
+          <div className="h-full">
+            <PesosDiaSemana />
+          </div>
+
+          {/* Histórico de Vendas por Setor - full width */}
+          <div className="md:col-span-2">
+            <HistoricoVendasSetor />
+          </div>
         </div>
-
-        {/* Peso dos Dias da Semana */}
-        <PesosDiaSemana />
-
-        {/* Histórico de Vendas por Setor */}
-        <HistoricoVendasSetor />
       </div>
 
       {/* Dialog Setor */}
