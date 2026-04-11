@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import HistoricoVendasSetor from '@/components/HistoricoVendasSetor';
+import PesosDiaSemana from '@/components/PesosDiaSemana';
 
 const MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -359,6 +360,9 @@ const GestaoMetas = () => {
             As metas anuais podem ser ajustadas indefinidamente.
           </p>
         </div>
+
+        {/* Peso dos Dias da Semana */}
+        <PesosDiaSemana />
 
         {/* Histórico de Vendas por Setor */}
         <HistoricoVendasSetor />

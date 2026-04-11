@@ -53,11 +53,33 @@ const DashboardMetas = () => {
   const diasNoMes = new Date(anoRef, mesRef, 0).getDate();
   const diasRestantes = diasNoMes - diaRef;
 
+  const [pesosMap, setPesosMap] = useState<Record<number, number>>({});
+
+  const PESOS_DEFAULT: Record<number, number> = { 0: 0.5, 1: 1.0, 2: 1.0, 3: 1.0, 4: 1.0, 5: 1.1, 6: 1.2 };
+
+  const getPeso = (dia: number) => pesosMap[dia] ?? PESOS_DEFAULT[dia] ?? 1.0;
+
+  // Weighted daily goal calculation
+  const metaDoDiaCalc = useMemo(() => {
+    if (metaGeral <= 0) return 0;
+    // Sum weights of remaining days (from dataSelecionada onward)
+    let somaPesos = 0;
+    for (let d = diaRef; d <= diasNoMes; d++) {
+      const date = new Date(anoRef, mesRef - 1, d);
+      somaPesos += getPeso(date.getDay());
+    }
+    if (somaPesos <= 0) return 0;
+    const falta = Math.max(0, metaGeral - totalVendido + setoresData.reduce((s, x) => s + x.vendaHoje, 0));
+    const pesoDia = getPeso(dataSelecionada.getDay());
+    return (pesoDia / somaPesos) * falta;
+  }, [metaGeral, totalVendido, setoresData, diaRef, diasNoMes, anoRef, mesRef, dataSelecionada, pesosMap]);
+
   const percentualAtingido = metaGeral > 0 ? (totalVendido / metaGeral) * 100 : 0;
   const faltaParaMeta = Math.max(0, metaGeral - totalVendido);
 
   const vendidoHoje = setoresData.reduce((sum, s) => sum + s.vendaHoje, 0);
-  const metaDoDia = diasRestantes > 0 ? faltaParaMeta / diasRestantes : 0;
+  const metaDoDia = metaDoDiaCalc;
+  const pesoDoDia = getPeso(dataSelecionada.getDay());
   const resultadoDia = vendidoHoje - metaDoDia;
 
   const voltarDia = () => {
@@ -86,6 +108,12 @@ const DashboardMetas = () => {
   };
 
   const loadData = useCallback(async () => {
+    // Load pesos
+    const { data: pesosRaw } = await supabase.from('metas_pesos_semana').select('dia_semana, peso');
+    const pm: Record<number, number> = {};
+    (pesosRaw || []).forEach((r: any) => { pm[r.dia_semana] = Number(r.peso); });
+    setPesosMap(pm);
+
     const { data: metaData } = await supabase
       .from('metas_mensais')
       .select('meta_total')
@@ -131,18 +159,27 @@ const DashboardMetas = () => {
     });
     setTotalVendido(total);
 
+    // Weighted daily calculation helper for setor
+    const getPesoLocal = (d: number) => pm[d] ?? PESOS_DEFAULT[d] ?? 1.0;
+    let somaPesosRestantes = 0;
+    for (let d = diaRef; d <= diasNoMes; d++) {
+      const date = new Date(anoRef, mesRef - 1, d);
+      somaPesosRestantes += getPesoLocal(date.getDay());
+    }
+    const pesoDiaAtual = getPesoLocal(dataSelecionada.getDay());
+
     const setoresProcessados: SetorData[] = (setoresRaw || []).map((s: any) => {
       const meta = metaTotal * (Number(s.percentual) / 100);
       const vendido = (vendasAnterioresPorSetor.get(s.id) || 0) + (vendasDiaPorSetor.get(s.id) || 0);
       const vendaHoje = vendasDiaPorSetor.get(s.id) || 0;
       const falta = Math.max(0, meta - vendido);
-      const metaDiaria = diasRestantes > 0 ? falta / diasRestantes : 0;
+      const metaDiaria = somaPesosRestantes > 0 ? (pesoDiaAtual / somaPesosRestantes) * falta : 0;
       return { id: s.id, nome: s.nome, percentual: Number(s.percentual), meta, vendido, vendaHoje, falta, metaDiaria };
     });
 
     setSetoresData(setoresProcessados);
     setLoading(false);
-  }, [anoRef, mesRef, diasNoMes, diasRestantes, dataSelecionada]);
+  }, [anoRef, mesRef, diasNoMes, diaRef, dataSelecionada]);
 
   useEffect(() => {
     loadData();
@@ -151,6 +188,7 @@ const DashboardMetas = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_vendas' }, () => loadData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_mensais' }, () => loadData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_setores' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_pesos_semana' }, () => loadData())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [loadData]);
@@ -275,6 +313,9 @@ const DashboardMetas = () => {
         <div className="glass-card p-3 text-center">
           <p className="text-xs text-muted-foreground mb-1">Meta do Dia</p>
           <p className="text-lg font-bold text-primary">{fmt(metaDoDia)}</p>
+          {pesoDoDia !== 1.0 && (
+            <p className="text-xs text-muted-foreground">peso {pesoDoDia.toFixed(1)}×</p>
+          )}
         </div>
         <div className="glass-card p-3 text-center">
           <p className="text-xs text-muted-foreground mb-1">{isHoje ? 'Vendido Hoje' : 'Vendido no Dia'}</p>
