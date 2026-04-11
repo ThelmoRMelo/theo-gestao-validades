@@ -236,6 +236,30 @@ export type Database = {
         }
         Relationships: []
       }
+      metas_pesos_semana: {
+        Row: {
+          created_at: string | null
+          dia_semana: number
+          id: string
+          peso: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dia_semana: number
+          id?: string
+          peso?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dia_semana?: number
+          id?: string
+          peso?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       metas_setores: {
         Row: {
           ativo: boolean
