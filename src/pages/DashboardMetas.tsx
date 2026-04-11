@@ -188,6 +188,7 @@ const DashboardMetas = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_vendas' }, () => loadData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_mensais' }, () => loadData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_setores' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_pesos_semana' }, () => loadData())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [loadData]);
@@ -312,6 +313,9 @@ const DashboardMetas = () => {
         <div className="glass-card p-3 text-center">
           <p className="text-xs text-muted-foreground mb-1">Meta do Dia</p>
           <p className="text-lg font-bold text-primary">{fmt(metaDoDia)}</p>
+          {pesoDoDia !== 1.0 && (
+            <p className="text-xs text-muted-foreground">peso {pesoDoDia.toFixed(1)}×</p>
+          )}
         </div>
         <div className="glass-card p-3 text-center">
           <p className="text-xs text-muted-foreground mb-1">{isHoje ? 'Vendido Hoje' : 'Vendido no Dia'}</p>
