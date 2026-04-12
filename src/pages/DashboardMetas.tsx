@@ -149,7 +149,7 @@ const DashboardMetas = () => {
     const vendasAnterioresPorSetor = new Map<string, number>();
     const vendasDiaPorSetor = new Map<string, number>();
 
-    (vendasRaw || []).forEach((v: any) => {
+    (vendasRawArr || []).forEach((v: any) => {
       const val = Number(v.valor);
       if (v.data === dataRef) {
         vendasDiaPorSetor.set(v.setor_id, (vendasDiaPorSetor.get(v.setor_id) || 0) + val);
