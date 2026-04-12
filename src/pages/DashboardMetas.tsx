@@ -43,7 +43,8 @@ const DashboardMetas = () => {
   const [setoresData, setSetoresData] = useState<SetorData[]>([]);
   const [loading, setLoading] = useState(true);
   const [exportModalOpen, setExportModalOpen] = useState(false);
-  const dateInputRef = useRef<HTMLInputElement>(null);
+  const [selectedSetor, setSelectedSetor] = useState<SetorData | null>(null);
+  const [vendasRaw, setVendasRaw] = useState<{ setor_id: string; valor: number; data: string }[]>([]);
 
   const hoje = useMemo(() => new Date(), []);
   const isHoje = isSameDay(dataSelecionada, hoje);
