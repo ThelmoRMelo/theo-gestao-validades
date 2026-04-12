@@ -375,7 +375,7 @@ const DashboardMetas = () => {
             </thead>
             <tbody>
               {setoresData.map(s => (
-                <tr key={s.id} className="border-b border-border/50">
+                <tr key={s.id} className="border-b border-border/50 cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => setSelectedSetor(s)}>
                   <td className="py-2 text-foreground whitespace-nowrap">{s.nome}</td>
                   <td className="py-2 text-right text-foreground whitespace-nowrap">{fmt(s.meta)}</td>
                   <td className="py-2 text-right text-green whitespace-nowrap">{fmt(s.vendido)}</td>
