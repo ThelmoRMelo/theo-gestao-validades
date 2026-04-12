@@ -136,11 +136,14 @@ const DashboardMetas = () => {
     const endDate = `${anoRef}-${String(mesRef).padStart(2, '0')}-${String(diasNoMes).padStart(2, '0')}`;
     const dataRef = toYMD(dataSelecionada);
 
-    const { data: vendasRaw } = await supabase
+    const { data: vendasData } = await supabase
       .from('metas_vendas')
       .select('setor_id, valor, data')
       .gte('data', startDate)
       .lte('data', endDate);
+
+    const vendasRawArr = (vendasData || []).map((v: any) => ({ setor_id: v.setor_id, valor: Number(v.valor), data: v.data }));
+    setVendasRaw(vendasRawArr);
 
     const vendasAnterioresPorSetor = new Map<string, number>();
     const vendasDiaPorSetor = new Map<string, number>();
