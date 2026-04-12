@@ -44,6 +44,7 @@ const DashboardMetas = () => {
   const [loading, setLoading] = useState(true);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [selectedSetor, setSelectedSetor] = useState<SetorData | null>(null);
+  const [vendasRawState, setVendasRaw] = useState<{ setor_id: string; valor: number; data: string }[]>([]);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   const hoje = useMemo(() => new Date(), []);
