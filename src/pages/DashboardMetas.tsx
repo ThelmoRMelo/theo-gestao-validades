@@ -456,6 +456,20 @@ const DashboardMetas = () => {
           </div>
         </div>
       )}
+
+      {/* Setor Detail Modal */}
+      {selectedSetor && (
+        <SetorDetalheModal
+          setorId={selectedSetor.id}
+          setorNome={selectedSetor.nome}
+          setorPercentual={selectedSetor.percentual}
+          dataSelecionada={dataSelecionada}
+          metaGeral={metaGeral}
+          pesosMap={pesosMap}
+          vendasRaw={vendasRawState}
+          onClose={() => setSelectedSetor(null)}
+        />
+      )}
     </div>
   );
 };
