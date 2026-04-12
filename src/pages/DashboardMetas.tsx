@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Target, Trophy, AlertTriangle, BarChart3, ChevronLeft, ChevronRight, CalendarDays, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { exportMetasToExcel, exportMetasToPDF } from '@/lib/exportMetasUtils';
+import SetorDetalheModal from '@/components/SetorDetalheModal';
 import { toast } from 'sonner';
 
 interface SetorData {
@@ -42,6 +43,8 @@ const DashboardMetas = () => {
   const [setoresData, setSetoresData] = useState<SetorData[]>([]);
   const [loading, setLoading] = useState(true);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [selectedSetor, setSelectedSetor] = useState<SetorData | null>(null);
+  const [vendasRawState, setVendasRaw] = useState<{ setor_id: string; valor: number; data: string }[]>([]);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   const hoje = useMemo(() => new Date(), []);
@@ -134,16 +137,19 @@ const DashboardMetas = () => {
     const endDate = `${anoRef}-${String(mesRef).padStart(2, '0')}-${String(diasNoMes).padStart(2, '0')}`;
     const dataRef = toYMD(dataSelecionada);
 
-    const { data: vendasRaw } = await supabase
+    const { data: vendasData } = await supabase
       .from('metas_vendas')
       .select('setor_id, valor, data')
       .gte('data', startDate)
       .lte('data', endDate);
 
+    const vendasRawArr = (vendasData || []).map((v: any) => ({ setor_id: v.setor_id, valor: Number(v.valor), data: v.data }));
+    setVendasRaw(vendasRawArr);
+
     const vendasAnterioresPorSetor = new Map<string, number>();
     const vendasDiaPorSetor = new Map<string, number>();
 
-    (vendasRaw || []).forEach((v: any) => {
+    (vendasRawArr || []).forEach((v: any) => {
       const val = Number(v.valor);
       if (v.data === dataRef) {
         vendasDiaPorSetor.set(v.setor_id, (vendasDiaPorSetor.get(v.setor_id) || 0) + val);
@@ -369,7 +375,7 @@ const DashboardMetas = () => {
             </thead>
             <tbody>
               {setoresData.map(s => (
-                <tr key={s.id} className="border-b border-border/50">
+                <tr key={s.id} className="border-b border-border/50 cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => setSelectedSetor(s)}>
                   <td className="py-2 text-foreground whitespace-nowrap">{s.nome}</td>
                   <td className="py-2 text-right text-foreground whitespace-nowrap">{fmt(s.meta)}</td>
                   <td className="py-2 text-right text-green whitespace-nowrap">{fmt(s.vendido)}</td>
@@ -449,6 +455,20 @@ const DashboardMetas = () => {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Setor Detail Modal */}
+      {selectedSetor && (
+        <SetorDetalheModal
+          setorId={selectedSetor.id}
+          setorNome={selectedSetor.nome}
+          setorPercentual={selectedSetor.percentual}
+          dataSelecionada={dataSelecionada}
+          metaGeral={metaGeral}
+          pesosMap={pesosMap}
+          vendasRaw={vendasRawState}
+          onClose={() => setSelectedSetor(null)}
+        />
       )}
     </div>
   );
