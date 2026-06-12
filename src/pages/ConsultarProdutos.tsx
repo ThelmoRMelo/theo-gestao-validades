@@ -10,6 +10,9 @@ import * as db from '@/lib/db';
 import { syncProdutoToCloud } from '@/lib/sync';
 import type { Produto, ProductLot, Sector } from '@/lib/db';
 import BarcodeScanner from '@/components/BarcodeScanner';
+import ExportDropdown from '@/components/ExportDropdown';
+import { ExportSortOption } from '@/components/ExportOptionsModal';
+import { exportToExcel, exportToPDF, exportToExcelBySector, exportToPDFBySector } from '@/lib/exportUtils';
 import { toast } from 'sonner';
 
 interface ProdutoComLotes extends Produto {
