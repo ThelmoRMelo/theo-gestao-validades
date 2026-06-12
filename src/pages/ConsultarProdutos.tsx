@@ -180,24 +180,107 @@ const ConsultarProdutos = () => {
     return 'text-green';
   };
 
+  const formatDateForExport = (dateStr?: string) => {
+    if (!dateStr) return '—';
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('pt-BR');
+  };
+
+  const buildExportRows = () => {
+    // Uma linha por lote ativo do produto filtrado; se não houver lotes, gera linha do produto.
+    type Row = { produto: ProdutoComLotes; lot?: ProductLot };
+    const rows: Row[] = [];
+    filteredProdutos.forEach((p) => {
+      if (p.lots.length === 0) {
+        rows.push({ produto: p });
+      } else {
+        p.lots.forEach((lot) => rows.push({ produto: p, lot }));
+      }
+    });
+    return rows;
+  };
+
+  const handleExport = async (format: 'excel' | 'pdf', sortOption: ExportSortOption) => {
+    try {
+      const filename = `consulta-produtos-${new Date().toISOString().split('T')[0]}`;
+      const headers = ['Produto', 'Código', 'Setor', 'Quantidade', 'Lote', 'Validade', 'Status'];
+      const rowsData = buildExportRows();
+
+      const toCells = (r: { produto: ProdutoComLotes; lot?: ProductLot }) => [
+        r.produto.name,
+        r.produto.barcode,
+        r.produto.sector || 'Geral',
+        r.lot ? r.lot.quantity.toString() : '0',
+        r.lot ? r.lot.id.substring(0, 8) : '—',
+        r.lot ? formatDateForExport(r.lot.expiration_date) : '—',
+        r.produto.is_active === false ? 'Inativo' : r.lot?.status === 'disabled' ? 'Lote desativado' : 'Ativo',
+      ];
+
+      const sortFn = (a: typeof rowsData[number], b: typeof rowsData[number]) => {
+        if (sortOption === 'date-asc') return (a.lot?.expiration_date || '9999').localeCompare(b.lot?.expiration_date || '9999');
+        if (sortOption === 'date-desc') return (b.lot?.expiration_date || '0').localeCompare(a.lot?.expiration_date || '0');
+        const s = (a.produto.sector || 'Geral').localeCompare(b.produto.sector || 'Geral', 'pt-BR');
+        if (s !== 0) return s;
+        return a.produto.name.localeCompare(b.produto.name, 'pt-BR');
+      };
+      const sorted = [...rowsData].sort(sortFn);
+
+      if (sortOption === 'sector-az') {
+        const sectorMap = new Map<string, string[][]>();
+        sorted.forEach((r) => {
+          const sector = r.produto.sector || 'Geral';
+          if (!sectorMap.has(sector)) sectorMap.set(sector, []);
+          sectorMap.get(sector)!.push(toCells(r));
+        });
+        const sectors = Array.from(sectorMap.entries())
+          .map(([sector, rows]) => ({ sector, rows }))
+          .sort((a, b) => a.sector.localeCompare(b.sector, 'pt-BR'));
+
+        const data = {
+          headers,
+          sectors,
+          title: 'Consulta de Produtos',
+          totalLotes: sorted.length,
+        };
+        if (format === 'excel') exportToExcelBySector(data, filename);
+        else exportToPDFBySector(data, filename);
+      } else {
+        const data = {
+          headers,
+          rows: sorted.map(toCells),
+          title: 'Consulta de Produtos',
+        };
+        if (format === 'excel') exportToExcel(data, filename);
+        else exportToPDF(data, filename);
+      }
+
+      toast.success(`Exportado para ${format.toUpperCase()} com sucesso!`);
+    } catch (error) {
+      console.error('Erro ao exportar:', error);
+      toast.error('Erro ao exportar dados');
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header - Área Fixa */}
-      <header className="header-gradient flex items-center gap-4 flex-shrink-0">
-        <button 
-          onClick={() => navigate('/')}
-          className="w-10 h-10 rounded-xl bg-primary-foreground/20 flex items-center justify-center"
-        >
-          <ArrowLeft className="w-5 h-5 text-primary-foreground" />
-        </button>
-        <div>
-          <h1 className="font-display text-xl font-bold text-primary-foreground">
-            Consultar Produtos
-          </h1>
-          <p className="text-primary-foreground/80 text-sm">
-            {filteredProdutos.length} produtos encontrados
-          </p>
+      <header className="header-gradient flex items-center justify-between gap-4 flex-shrink-0">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => navigate('/')}
+            className="w-10 h-10 rounded-xl bg-primary-foreground/20 flex items-center justify-center"
+          >
+            <ArrowLeft className="w-5 h-5 text-primary-foreground" />
+          </button>
+          <div>
+            <h1 className="font-display text-xl font-bold text-primary-foreground">
+              Consultar Produtos
+            </h1>
+            <p className="text-primary-foreground/80 text-sm">
+              {filteredProdutos.length} produtos encontrados
+            </p>
+          </div>
         </div>
+        <ExportDropdown onExport={handleExport} />
       </header>
 
       {/* Área Fixa: Busca + Filtros */}
