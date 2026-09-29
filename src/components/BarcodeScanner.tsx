@@ -182,7 +182,7 @@ const calculateScanRegion = (
           <div
             id="scanner-container"
             ref={containerRef}
-            className="w-full h-full [&>video]:object-cover"
+            className="w-full h-full [&>video]:object-contain [&>video]:bg-black"
             style={{
               // Garantir que o vídeo preencha o container
               position: 'relative',
