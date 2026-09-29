@@ -217,15 +217,15 @@ const calculateScanRegion = (
                   <mask id="scan-mask">
                     {/* Fundo branco (visível) */}
                     <rect x="0" y="0" width="100%" height="100%" fill="white" />
-                    {/* Buraco central preto (transparente) - 60% largura, 28% altura, centralizado */}
-                    <rect 
-                      x="20%" 
-                      y="36%" 
-                      width="60%" 
-                      height="28%" 
-                      fill="black" 
-                      rx="8"
-                    />
+                    {/* Área visual correspondente à região real de leitura */}
+<rect 
+  x="5%" 
+  y="31%" 
+  width="90%" 
+  height="38%" 
+  fill="black" 
+  rx="8"
+/>
                   </mask>
                 </defs>
                 {/* Overlay escuro com máscara */}
