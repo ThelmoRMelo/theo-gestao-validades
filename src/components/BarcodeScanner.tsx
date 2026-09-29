@@ -87,6 +87,34 @@ const calculateScanRegion = (
       if (mountedRef.current) {
         setIsScanning(true);
       }
+      // Tenta otimizar automaticamente o foco da câmera para leitura
+      // de códigos de barras próximos e distantes.
+      try {
+        const runningTrack = (scanner as any).getRunningTrackSettings?.();
+
+        if (runningTrack) {
+          await (scanner as any).applyVideoConstraints({
+            advanced: [
+              {
+                focusMode: 'continuous',
+              },
+            ],
+          });
+
+          console.log('Foco contínuo solicitado para a câmera.');
+        }
+      } catch (focusError) {
+        // Nem todas as câmeras/browser suportam focusMode.
+        // O scanner continua funcionando normalmente com o autofoco nativo.
+        console.log(
+          'Foco contínuo não disponível neste dispositivo:',
+          focusError
+        );
+      }
+
+      if (mountedRef.current) {
+        setIsScanning(true);
+      }
     } catch (err: any) {
       console.error('Scanner error:', err);
       if (mountedRef.current) {
