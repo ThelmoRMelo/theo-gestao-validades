@@ -48,22 +48,21 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ isOpen, onClose, onScan
       });
       scannerRef.current = scanner;
 
-      // Configuração da área de scan CENTRALIZADA
-      // Esta função é chamada pela biblioteca para definir a região de interesse REAL
-      // A qrbox define tanto o overlay visual quanto a área de detecção
-      const calculateScanRegion = (viewfinderWidth: number, viewfinderHeight: number) => {
-        // Dimensões da área de scan: 60% da largura, 28% da altura
-        // Essas proporções garantem boa captura de códigos de barras lineares
-        const scanWidth = Math.floor(viewfinderWidth * 0.6);
-        const scanHeight = Math.floor(viewfinderHeight * 0.28);
-        
-        // Retornar dimensões que serão CENTRALIZADAS automaticamente pela biblioteca
-        return { 
-          width: scanWidth, 
-          height: scanHeight 
-        };
-      };
+// Área de leitura otimizada para códigos de barras EAN/UPC.
+// Mantemos uma região ampla para evitar que o usuário precise
+// posicionar o código exatamente em um ponto específico.
+const calculateScanRegion = (
+  viewfinderWidth: number,
+  viewfinderHeight: number
+) => {
+  const scanWidth = Math.floor(viewfinderWidth * 0.90);
+  const scanHeight = Math.floor(viewfinderHeight * 0.38);
 
+  return {
+    width: scanWidth,
+    height: scanHeight,
+  };
+};
       await scanner.start(
         { facingMode: 'environment' },
         {
