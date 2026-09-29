@@ -239,16 +239,16 @@ const calculateScanRegion = (
                 />
               </svg>
               
-              {/* Frame de scan - posicionado EXATAMENTE no centro (60% largura, 28% altura) */}
-              <div 
-                className="absolute"
-                style={{ 
-                  left: '20%',
-                  top: '36%',
-                  width: '60%', 
-                  height: '28%',
-                }}
-              >
+              {/* Frame visual alinhado com a região real de leitura */}
+<div 
+  className="absolute"
+  style={{ 
+    left: '5%',
+    top: '31%',
+    width: '90%', 
+    height: '38%',
+  }}
+>
                 {/* Borda principal */}
                 <div className="absolute inset-0 border-2 border-primary rounded-lg" />
                 
