@@ -64,13 +64,15 @@ const calculateScanRegion = (
   };
 };
       await scanner.start(
-        { facingMode: 'environment' },
-        {
-          fps: 10, // FPS menor para melhor processamento
-          qrbox: calculateScanRegion,
-          aspectRatio: 4/3,
-          disableFlip: false,
-        },
+  {
+    facingMode: 'environment',
+  },
+  {
+    fps: 15,
+    qrbox: calculateScanRegion,
+    aspectRatio: 4 / 3,
+    disableFlip: false,
+  },
         (decodedText) => {
           // Código detectado com sucesso
           onScan(decodedText);
