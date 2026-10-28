@@ -24,6 +24,8 @@ import DashboardMetas from "./pages/DashboardMetas";
 import NotFound from "./pages/NotFound";
 import CentralFerramentas from "./pages/CentralFerramentas";
 import ModuloEmPreparacao from "./pages/ModuloEmPreparacao";
+import SorteiosConfig from "./pages/SorteiosConfig";
+import SorteioPublico from "./pages/SorteioPublico";
 
 const queryClient = new QueryClient();
 
@@ -74,7 +76,8 @@ const App = () => {
                 <Route path="/metas" element={<DashboardMetas />} />
                 <Route path="/ferramentas" element={<CentralFerramentas />} />
                 <Route path="/ferramentas/urna-cipa" element={<ModuloEmPreparacao variant="urna" />} />
-                <Route path="/ferramentas/sorteios" element={<ModuloEmPreparacao variant="sorteios" />} />
+                <Route path="/ferramentas/sorteios" element={<SorteiosConfig />} />
+                <Route path="/sorteio/:id" element={<SorteioPublico />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             )}
