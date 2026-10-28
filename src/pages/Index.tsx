@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
-import { Package, AlertTriangle, Plus, Search, Settings, MessageCircle, Shield, Trash2, X, Check } from 'lucide-react';
+import { Package, AlertTriangle, Plus, Search, Settings, Hammer, Shield, Trash2, X, Check } from 'lucide-react';
 import * as db from '@/lib/db';
 import type { AppIdentity } from '@/lib/db';
 import {
@@ -259,17 +259,17 @@ const Index = () => {
             <span className="font-medium text-foreground">Configurações</span>
           </div>
         </div>
-        <div onClick={() => navigate('/chat')} className="action-card green relative">
+        <div onClick={() => navigate('/ferramentas')} className="action-card green relative">
           <div className="gradient-border-card-inner flex flex-col items-center justify-center gap-3 min-h-[140px]">
             <div className="icon-circle w-16 h-16 rounded-full border-2 border-green flex items-center justify-center relative">
-              <MessageCircle className="w-8 h-8 text-green" />
+              <Hammer className="w-8 h-8 text-green" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-coral text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </div>
-            <span className="font-medium text-foreground">Chat Global</span>
+            <span className="font-medium text-foreground">Ferramentas</span>
           </div>
         </div>
       </div>
