@@ -22,6 +22,8 @@ import GestaoMetas from "./pages/GestaoMetas";
 import LancarVenda from "./pages/LancarVenda";
 import DashboardMetas from "./pages/DashboardMetas";
 import NotFound from "./pages/NotFound";
+import CentralFerramentas from "./pages/CentralFerramentas";
+import ModuloEmPreparacao from "./pages/ModuloEmPreparacao";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +72,9 @@ const App = () => {
                 <Route path="/gestao-metas" element={<GestaoMetas />} />
                 <Route path="/lancar-venda" element={<LancarVenda />} />
                 <Route path="/metas" element={<DashboardMetas />} />
+                <Route path="/ferramentas" element={<CentralFerramentas />} />
+                <Route path="/ferramentas/urna-cipa" element={<ModuloEmPreparacao variant="urna" />} />
+                <Route path="/ferramentas/sorteios" element={<ModuloEmPreparacao variant="sorteios" />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             )}
