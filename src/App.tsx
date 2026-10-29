@@ -25,7 +25,7 @@ import NotFound from "./pages/NotFound";
 import CentralFerramentas from "./pages/CentralFerramentas";
 import ModuloEmPreparacao from "./pages/ModuloEmPreparacao";
 import SorteiosConfig from "./pages/SorteiosConfig";
-import SorteioVendas from './pages/SorteioVendas';
+import SorteioVendas from "./pages/SorteioVendas";
 import SorteioPublico from "./pages/SorteioPublico";
 
 const queryClient = new QueryClient();
