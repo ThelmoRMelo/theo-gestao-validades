@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793234822852,
+      "tag": "0000_sorteios_etapa2",
+      "breakpoints": true
+    }
+  ]
+}

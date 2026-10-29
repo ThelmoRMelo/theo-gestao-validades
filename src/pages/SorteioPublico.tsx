@@ -1,18 +1,34 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useParams } from 'react-router-dom';
 import { Gift, Trophy, X, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { getSorteio, brl, padNum, buildWhatsAppUrl, STATUS_LABEL } from '@/lib/sorteios';
+import { Sorteio, getSorteio, listNumerosVendidos, brl, padNum, buildWhatsAppUrl, STATUS_LABEL } from '@/lib/sorteios';
 
 const SorteioPublico = () => {
   const { id = '' } = useParams();
-  const s = getSorteio(id);
+  const [s, setS] = useState<Sorteio | null | undefined>(undefined);
+  const [vendidosArr, setVendidosArr] = useState<number[]>([]);
   const [sel, setSel] = useState<number[]>([]);
   const [resumo, setResumo] = useState(false);
-  // Etapa 1: ainda não há vendas registradas; números vendidos virão do backend na Etapa 2.
-  const vendidos = useMemo(() => new Set<number>(), []);
+  useEffect(() => {
+    const carregar = () => listNumerosVendidos(id).then((v) => {
+      setVendidosArr(v);
+      setSel((p) => p.filter((n) => !v.includes(n)));
+    });
+    getSorteio(id).then((r) => setS(r ?? null));
+    carregar();
+    const ch = supabase
+      .channel(`pub-${id}-${Math.random().toString(36).slice(2)}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sorteio_numeros', filter: `sorteio_id=eq.${id}` }, carregar)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sorteios', filter: `id=eq.${id}` }, () => getSorteio(id).then((r) => setS(r ?? null)))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [id]);
+  const vendidos = useMemo(() => new Set<number>(vendidosArr), [vendidosArr]);
 
+  if (s === undefined) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Carregando…</div>;
   if (!s) {
     return <div className="min-h-screen flex items-center justify-center p-6 text-center text-muted-foreground">Sorteio não encontrado.</div>;
   }

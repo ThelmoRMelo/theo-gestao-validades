@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Gift, Plus, ExternalLink, Copy, Trash2, Info } from 'lucide-react';
+import { ArrowLeft, Gift, Plus, ExternalLink, Copy, Trash2, ClipboardCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -16,13 +16,15 @@ const vazio = (): Sorteio => ({
 
 const SorteiosConfig = () => {
   const navigate = useNavigate();
-  const [lista, setLista] = useState<Sorteio[]>(listSorteios());
+  const [lista, setLista] = useState<Sorteio[]>([]);
+  const recarregar = () => listSorteios().then(setLista).catch(() => toast.error('Erro ao carregar sorteios'));
+  useEffect(() => { recarregar(); }, []);
   const [form, setForm] = useState<Sorteio | null>(null);
   const [erros, setErros] = useState<Record<string, string>>({});
 
   const set = <K extends keyof Sorteio>(k: K, v: Sorteio[K]) => setForm((f) => (f ? { ...f, [k]: v } : f));
 
-  const salvar = () => {
+  const salvar = async () => {
     if (!form) return;
     const r = sorteioSchema.safeParse(form);
     if (!r.success) {
@@ -32,11 +34,11 @@ const SorteiosConfig = () => {
       toast.error('Verifique os campos destacados');
       return;
     }
-    saveSorteio(r.data);
-    setLista(listSorteios());
+    try { await saveSorteio(r.data); } catch { toast.error('Erro ao salvar'); return; }
+    recarregar();
     setForm(null);
     setErros({});
-    toast.success('Sorteio salvo (rascunho neste aparelho)');
+    toast.success('Sorteio salvo');
   };
 
   const linkPublico = (id: string) => `${window.location.origin}/sorteio/${id}`;
@@ -55,11 +57,6 @@ const SorteiosConfig = () => {
       </header>
 
       <div className="px-4 max-w-2xl mx-auto space-y-4">
-        <div className="glass-card rounded-xl p-3 flex gap-2 text-xs text-muted-foreground">
-          <Info className="w-4 h-4 shrink-0 text-primary" />
-          Etapa 1 (prévia): os sorteios ficam salvos apenas neste aparelho. O link público funcionará para outras pessoas após a Etapa 2.
-        </div>
-
         {!form && (
           <>
             <Button onClick={() => { setForm(vazio()); setErros({}); }} className="w-full"><Plus className="w-4 h-4 mr-2" /> Novo sorteio</Button>
@@ -75,9 +72,10 @@ const SorteiosConfig = () => {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" variant="secondary" onClick={() => { setForm(s); setErros({}); }}>Editar</Button>
+                  <Button size="sm" onClick={() => navigate(`/ferramentas/sorteios/${s.id}/vendas`)}><ClipboardCheck className="w-3 h-3 mr-1" /> Dar baixa</Button>
                   <Button size="sm" variant="secondary" onClick={() => navigate(`/sorteio/${s.id}`)}><ExternalLink className="w-3 h-3 mr-1" /> Ver página</Button>
                   <Button size="sm" variant="secondary" onClick={() => { navigator.clipboard.writeText(linkPublico(s.id)); toast.success('Link copiado'); }}><Copy className="w-3 h-3 mr-1" /> Copiar link</Button>
-                  <Button size="sm" variant="destructive" onClick={() => { if (confirm('Excluir este rascunho?')) { deleteSorteio(s.id); setLista(listSorteios()); } }}><Trash2 className="w-3 h-3" /></Button>
+                  <Button size="sm" variant="destructive" onClick={() => { if (confirm('Excluir este sorteio e todas as vendas registradas?')) { deleteSorteio(s.id).then(recarregar); } }}><Trash2 className="w-3 h-3" /></Button>
                 </div>
               </div>
             ))}

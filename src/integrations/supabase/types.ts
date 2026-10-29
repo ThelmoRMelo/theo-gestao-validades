@@ -447,6 +447,95 @@ export type Database = {
         }
         Relationships: []
       }
+      sorteio_numeros: {
+        Row: {
+          comprador_nome: string
+          comprador_telefone: string
+          created_at: string
+          id: string
+          numero: number
+          observacao: string
+          sorteio_id: string
+        }
+        Insert: {
+          comprador_nome: string
+          comprador_telefone?: string
+          created_at?: string
+          id?: string
+          numero: number
+          observacao?: string
+          sorteio_id: string
+        }
+        Update: {
+          comprador_nome?: string
+          comprador_telefone?: string
+          created_at?: string
+          id?: string
+          numero?: number
+          observacao?: string
+          sorteio_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sorteio_numeros_sorteio_id_fkey"
+            columns: ["sorteio_id"]
+            isOneToOne: false
+            referencedRelation: "sorteios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sorteios: {
+        Row: {
+          created_at: string
+          descricao: string
+          id: string
+          nome: string
+          numero_final: number
+          numero_inicial: number
+          preco_unitario: number
+          premio1: string
+          premio2: string
+          premio3: string
+          regras: string
+          status: string
+          updated_at: string
+          whatsapp: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          nome: string
+          numero_final: number
+          numero_inicial: number
+          preco_unitario: number
+          premio1: string
+          premio2?: string
+          premio3?: string
+          regras?: string
+          status?: string
+          updated_at?: string
+          whatsapp: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          nome?: string
+          numero_final?: number
+          numero_inicial?: number
+          preco_unitario?: number
+          premio1?: string
+          premio2?: string
+          premio3?: string
+          regras?: string
+          status?: string
+          updated_at?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
