@@ -140,14 +140,41 @@ export const buildWhatsAppUrl = (s: Sorteio, numeros: number[]) => {
 
 
 const PREVIEW_URL = 'https://svbocyguwvhkljzenlnb.supabase.co/functions/v1/sorteio-preview';
-export const getShareUrl = (id: string) => `${PREVIEW_URL}?id=${encodeURIComponent(id)}`;
-export const getBannerUrl = (id: string) => `${PREVIEW_URL}?id=${encodeURIComponent(id)}&img=1`;
+// `v` muda quando o banner muda, forçando o WhatsApp a buscar a prévia nova (ele guarda cache por link).
+const versao = (imagemUrl?: string) => (imagemUrl ? (imagemUrl.split('/').pop() ?? '').split('.')[0].slice(0, 8) : '');
+export const getShareUrl = (id: string, imagemUrl?: string) => {
+  const v = versao(imagemUrl);
+  return `${PREVIEW_URL}?id=${encodeURIComponent(id)}${v ? `&v=${v}` : ''}`;
+};
+export const getBannerUrl = (id: string, imagemUrl?: string) => {
+  const v = versao(imagemUrl);
+  return `${PREVIEW_URL}?id=${encodeURIComponent(id)}&img=1${v ? `&v=${v}` : ''}`;
+};
+
+// Reduz a imagem para no máx. 1200px (sem cortar) em JPEG leve (< ~300KB),
+// limite necessário para o WhatsApp exibir o banner na prévia do link.
+const comprimirBanner = async (file: File): Promise<Blob> => {
+  const bmp = await createImageBitmap(file);
+  const escala = Math.min(1, 1200 / Math.max(bmp.width, bmp.height));
+  const w = Math.round(bmp.width * escala), h = Math.round(bmp.height * escala);
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(bmp, 0, 0, w, h);
+  bmp.close?.();
+  for (const q of [0.82, 0.72, 0.62, 0.5]) {
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', q));
+    if (blob && (blob.size <= 300_000 || q === 0.5)) return blob;
+  }
+  throw new Error('Falha ao comprimir imagem');
+};
 
 export const uploadBannerSorteio = async (sorteioId: string, file: File): Promise<string> => {
   if (!file.type.startsWith('image/')) throw new Error('Selecione um arquivo de imagem');
-  const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-  const path = `${sorteioId}/${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from('sorteios').upload(path, file, { contentType: file.type, upsert: true });
+  const blob = await comprimirBanner(file);
+  const path = `${sorteioId}/${crypto.randomUUID()}.jpg`;
+  const { error } = await supabase.storage.from('sorteios').upload(path, blob, { contentType: 'image/jpeg', upsert: true });
   if (error) throw error;
   const { error: updateError } = await supabase.from('sorteios').update({ imagem_url: path }).eq('id', sorteioId);
   if (updateError) throw updateError;

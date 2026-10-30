@@ -42,7 +42,7 @@ const SorteiosConfig = () => {
     toast.success('Sorteio salvo');
   };
 
-  const compartilhar = (s: Sorteio) => `https://wa.me/?text=${encodeURIComponent(`${s.nome} — ${getShareUrl(s.id)}`)}`;
+  const compartilhar = (s: Sorteio) => `https://wa.me/?text=${encodeURIComponent(`${s.nome} — ${getShareUrl(s.id, s.imagemUrl)}`)}`;
 
   const Err = ({ k }: { k: string }) => (erros[k] ? <p className="text-xs text-destructive mt-1">{erros[k]}</p> : null);
 
@@ -76,7 +76,7 @@ const SorteiosConfig = () => {
                   <Button size="sm" onClick={() => navigate(`/ferramentas/sorteios/${s.id}/vendas`)}><ClipboardCheck className="w-3 h-3 mr-1" /> Dar baixa</Button>
                   <Button size="sm" onClick={() => navigate(`/ferramentas/sorteios/${s.id}/apuracao`)}><Trophy className="w-3 h-3 mr-1" /> Apuração</Button>
                   <Button size="sm" variant="secondary" onClick={() => navigate(`/sorteio/${s.id}`)}><ExternalLink className="w-3 h-3 mr-1" /> Ver página</Button>
-                  <Button size="sm" variant="secondary" onClick={() => { navigator.clipboard.writeText(getShareUrl(s.id)); toast.success('Link copiado'); }}><Copy className="w-3 h-3 mr-1" /> Copiar link</Button>
+                  <Button size="sm" variant="secondary" onClick={() => { navigator.clipboard.writeText(getShareUrl(s.id, s.imagemUrl)); toast.success('Link copiado'); }}><Copy className="w-3 h-3 mr-1" /> Copiar link</Button>
                   <Button size="sm" variant="secondary" onClick={() => window.open(compartilhar(s), '_blank', 'noopener')}><MessageCircle className="w-3 h-3 mr-1" /> WhatsApp</Button>
                   <Button size="sm" variant="destructive" onClick={() => { if (confirm('Excluir este sorteio e todas as vendas registradas?')) { deleteSorteio(s.id).then(recarregar); } }}><Trash2 className="w-3 h-3" /></Button>
                 </div>
@@ -98,7 +98,7 @@ const SorteiosConfig = () => {
                 catch { toast.error('Erro ao enviar banner'); }
                 finally { setUploadando(false); input.value = ''; }
               }} />
-              {form.imagemUrl && <img src={getBannerUrl(form.id)} alt="Prévia do banner" className="w-full max-h-48 rounded-lg object-cover" />}
+              {form.imagemUrl && <img src={getBannerUrl(form.id, form.imagemUrl)} alt="Prévia do banner" className="w-full max-h-48 rounded-lg object-cover" />}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Número inicial *</Label><Input type="number" value={form.numeroInicial} onChange={(e) => set('numeroInicial', parseInt(e.target.value || '0'))} /><Err k="numeroInicial" /></div>

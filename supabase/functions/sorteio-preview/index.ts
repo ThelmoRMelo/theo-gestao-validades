@@ -68,7 +68,8 @@ Deno.serve(async (req) => {
   const title = esc(s.nome);
   const preco = Number(s.preco_unitario).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const desc = esc(s.descricao || `Prêmio: ${s.premio1} • Número a ${preco}. Escolha os seus!`);
-  const img = s.imagem_url ? `${self}&img=1` : "";
+  const v = String(s.imagem_url ?? "").split("/").pop()?.split(".")[0].slice(0, 8) ?? "";
+  const img = s.imagem_url ? `${self}&img=1${v ? `&v=${v}` : ""}` : "";
 
   const html = `<!doctype html>
 <html lang="pt-BR">
@@ -77,10 +78,12 @@ Deno.serve(async (req) => {
   <title>${title}</title>
   <meta name="description" content="${desc}">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TheoGestão Sorteios">
+  <meta property="og:locale" content="pt_BR">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${desc}">
   <meta property="og:url" content="${target}">
-  ${img ? `<meta property="og:image" content="${img}"><meta property="og:image:secure_url" content="${img}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">` : ""}
+  ${img ? `<meta property="og:image" content="${img}"><meta property="og:image:secure_url" content="${img}"><meta property="og:image:type" content="image/jpeg"><meta property="og:image:alt" content="${title}">` : ""}
   <meta name="twitter:card" content="${img ? "summary_large_image" : "summary"}">
   <meta name="twitter:title" content="${title}">
   <meta name="twitter:description" content="${desc}">
