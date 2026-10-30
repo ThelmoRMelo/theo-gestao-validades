@@ -49,7 +49,7 @@ const SorteioPublico = () => {
       </header>
 
       <div className="px-4 max-w-3xl mx-auto space-y-4">
-        {s.imagemUrl && <img src={getBannerUrl(s.id)} alt={`Banner de ${s.nome}`} className="w-full max-h-80 rounded-2xl object-cover shadow-lg" />}
+        {s.imagemUrl && <img src={getBannerUrl(s.id, s.imagemUrl)} alt={`Banner de ${s.nome}`} className="w-full max-h-80 rounded-2xl object-cover shadow-lg" />}
         {!aberto && (
           <div className="glass-card rounded-xl p-3 text-sm text-center text-muted-foreground">Sorteio {STATUS_LABEL[s.status].toLowerCase()} — seleção indisponível.</div>
         )}
