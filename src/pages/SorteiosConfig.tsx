@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Gift, Plus, ExternalLink, Copy, Trash2, ClipboardCheck } from 'lucide-react';
+import { ArrowLeft, Gift, Plus, ExternalLink, Copy, Trash2, ClipboardCheck, Trophy, MessageCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Sorteio, SorteioStatus, STATUS_LABEL, sorteioSchema, listSorteios, saveSorteio, deleteSorteio, onlyDigits, brl } from '@/lib/sorteios';
+import { Sorteio, SorteioStatus, STATUS_LABEL, sorteioSchema, listSorteios, saveSorteio, deleteSorteio, onlyDigits, brl, getShareUrl, getBannerUrl, uploadBannerSorteio } from '@/lib/sorteios';
 
 const vazio = (): Sorteio => ({
   id: crypto.randomUUID(), nome: '', descricao: '', numeroInicial: 1, numeroFinal: 100, precoUnitario: 10,
@@ -21,6 +21,7 @@ const SorteiosConfig = () => {
   useEffect(() => { recarregar(); }, []);
   const [form, setForm] = useState<Sorteio | null>(null);
   const [erros, setErros] = useState<Record<string, string>>({});
+  const [uploadando, setUploadando] = useState(false);
 
   const set = <K extends keyof Sorteio>(k: K, v: Sorteio[K]) => setForm((f) => (f ? { ...f, [k]: v } : f));
 
@@ -41,7 +42,7 @@ const SorteiosConfig = () => {
     toast.success('Sorteio salvo');
   };
 
-  const linkPublico = (id: string) => `${window.location.origin}/sorteio/${id}`;
+  const compartilhar = (s: Sorteio) => `https://wa.me/?text=${encodeURIComponent(`${s.nome} — ${getShareUrl(s.id)}`)}`;
 
   const Err = ({ k }: { k: string }) => (erros[k] ? <p className="text-xs text-destructive mt-1">{erros[k]}</p> : null);
 
@@ -73,8 +74,10 @@ const SorteiosConfig = () => {
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" variant="secondary" onClick={() => { setForm(s); setErros({}); }}>Editar</Button>
                   <Button size="sm" onClick={() => navigate(`/ferramentas/sorteios/${s.id}/vendas`)}><ClipboardCheck className="w-3 h-3 mr-1" /> Dar baixa</Button>
+                  <Button size="sm" onClick={() => navigate(`/ferramentas/sorteios/${s.id}/apuracao`)}><Trophy className="w-3 h-3 mr-1" /> Apuração</Button>
                   <Button size="sm" variant="secondary" onClick={() => navigate(`/sorteio/${s.id}`)}><ExternalLink className="w-3 h-3 mr-1" /> Ver página</Button>
-                  <Button size="sm" variant="secondary" onClick={() => { navigator.clipboard.writeText(linkPublico(s.id)); toast.success('Link copiado'); }}><Copy className="w-3 h-3 mr-1" /> Copiar link</Button>
+                  <Button size="sm" variant="secondary" onClick={() => { navigator.clipboard.writeText(getShareUrl(s.id)); toast.success('Link copiado'); }}><Copy className="w-3 h-3 mr-1" /> Copiar link</Button>
+                  <Button size="sm" variant="secondary" onClick={() => window.open(compartilhar(s), '_blank', 'noopener')}><MessageCircle className="w-3 h-3 mr-1" /> WhatsApp</Button>
                   <Button size="sm" variant="destructive" onClick={() => { if (confirm('Excluir este sorteio e todas as vendas registradas?')) { deleteSorteio(s.id).then(recarregar); } }}><Trash2 className="w-3 h-3" /></Button>
                 </div>
               </div>
@@ -86,6 +89,17 @@ const SorteiosConfig = () => {
           <div className="glass-card rounded-xl p-4 space-y-3">
             <div><Label>Nome do sorteio *</Label><Input value={form.nome} onChange={(e) => set('nome', e.target.value)} maxLength={100} /><Err k="nome" /></div>
             <div><Label>Descrição</Label><Textarea value={form.descricao} onChange={(e) => set('descricao', e.target.value)} maxLength={1000} /></div>
+            <div className="space-y-2">
+              <Label htmlFor="banner-sorteio">Banner do sorteio</Label>
+              <Input id="banner-sorteio" type="file" accept="image/*" disabled={uploadando} onChange={async (e) => {
+                const input = e.currentTarget; const file = input.files?.[0]; if (!file || !form) return;
+                setUploadando(true);
+                try { const path = await uploadBannerSorteio(form.id, file); set('imagemUrl', path); toast.success('Banner enviado'); }
+                catch { toast.error('Erro ao enviar banner'); }
+                finally { setUploadando(false); input.value = ''; }
+              }} />
+              {form.imagemUrl && <img src={getBannerUrl(form.id)} alt="Prévia do banner" className="w-full max-h-48 rounded-lg object-cover" />}
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Número inicial *</Label><Input type="number" value={form.numeroInicial} onChange={(e) => set('numeroInicial', parseInt(e.target.value || '0'))} /><Err k="numeroInicial" /></div>
               <div><Label>Número final *</Label><Input type="number" value={form.numeroFinal} onChange={(e) => set('numeroFinal', parseInt(e.target.value || '0'))} /><Err k="numeroFinal" /></div>
@@ -106,7 +120,7 @@ const SorteiosConfig = () => {
             </div>
             <div className="flex gap-2 pt-2">
               <Button variant="secondary" className="flex-1" onClick={() => setForm(null)}>Cancelar</Button>
-              <Button className="flex-1" onClick={salvar}>Salvar</Button>
+              <Button className="flex-1" disabled={uploadando} onClick={salvar}>{uploadando ? 'Enviando banner…' : 'Salvar'}</Button>
             </div>
           </div>
         )}

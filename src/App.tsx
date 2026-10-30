@@ -26,6 +26,7 @@ import CentralFerramentas from "./pages/CentralFerramentas";
 import ModuloEmPreparacao from "./pages/ModuloEmPreparacao";
 import SorteiosConfig from "./pages/SorteiosConfig";
 import SorteioVendas from "./pages/SorteioVendas";
+import SorteioApuracao from "./pages/SorteioApuracao";
 import SorteioPublico from "./pages/SorteioPublico";
 
 const queryClient = new QueryClient();
@@ -80,6 +81,7 @@ const App = () => {
                 <Route path="/ferramentas/sorteios" element={<SorteiosConfig />} />
                 <Route path="/sorteio/:id" element={<SorteioPublico />} />
                 <Route path="/ferramentas/sorteios/:id/vendas" element={<SorteioVendas />} />
+                <Route path="/ferramentas/sorteios/:id/apuracao" element={<SorteioApuracao />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             )}

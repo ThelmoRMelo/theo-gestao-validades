@@ -27,6 +27,10 @@ export const sorteioSchema = z
     premio3: z.string().trim().max(200).default(''),
     regras: z.string().trim().max(2000).default(''),
     status: z.enum(['preparacao', 'publicado', 'encerrado', 'cancelado']),
+    imagemUrl: z.string().optional(), sorteadoEm: z.string().optional(),
+    ganhador1Numero: z.number().optional(), ganhador1Nome: z.string().optional(),
+    ganhador2Numero: z.number().optional(), ganhador2Nome: z.string().optional(),
+    ganhador3Numero: z.number().optional(), ganhador3Nome: z.string().optional(),
   })
   .refine((s) => s.numeroFinal > s.numeroInicial, { message: 'Número final deve ser maior que o inicial', path: ['numeroFinal'] })
   .refine((s) => s.numeroFinal - s.numeroInicial + 1 <= 10000, { message: 'Máximo de 10.000 números', path: ['numeroFinal'] });
@@ -40,11 +44,19 @@ const fromRow = (r: any): Sorteio => ({
   id: r.id, nome: r.nome, descricao: r.descricao ?? '', numeroInicial: r.numero_inicial, numeroFinal: r.numero_final,
   precoUnitario: Number(r.preco_unitario), whatsapp: r.whatsapp, premio1: r.premio1, premio2: r.premio2 ?? '',
   premio3: r.premio3 ?? '', regras: r.regras ?? '', status: r.status as SorteioStatus,
+  imagemUrl: r.imagem_url ?? undefined, sorteadoEm: r.sorteado_em ?? undefined,
+  ganhador1Numero: r.ganhador_1_numero ?? undefined, ganhador1Nome: r.ganhador_1_nome ?? undefined,
+  ganhador2Numero: r.ganhador_2_numero ?? undefined, ganhador2Nome: r.ganhador_2_nome ?? undefined,
+  ganhador3Numero: r.ganhador_3_numero ?? undefined, ganhador3Nome: r.ganhador_3_nome ?? undefined,
 });
 const toRow = (s: Sorteio) => ({
   id: s.id, nome: s.nome, descricao: s.descricao, numero_inicial: s.numeroInicial, numero_final: s.numeroFinal,
   preco_unitario: s.precoUnitario, whatsapp: s.whatsapp, premio1: s.premio1, premio2: s.premio2,
   premio3: s.premio3, regras: s.regras, status: s.status,
+  imagem_url: s.imagemUrl ?? null, sorteado_em: s.sorteadoEm ?? null,
+  ganhador_1_numero: s.ganhador1Numero ?? null, ganhador_1_nome: s.ganhador1Nome ?? null,
+  ganhador_2_numero: s.ganhador2Numero ?? null, ganhador_2_nome: s.ganhador2Nome ?? null,
+  ganhador_3_numero: s.ganhador3Numero ?? null, ganhador_3_nome: s.ganhador3Nome ?? null,
 });
 
 // Envia rascunhos antigos (salvos só no aparelho) para a nuvem uma única vez.
@@ -124,4 +136,31 @@ export const buildWhatsAppUrl = (s: Sorteio, numeros: number[]) => {
     'Poderia me enviar as instruções para pagamento e confirmação da aquisição?',
   ].join('\n');
   return `https://wa.me/${s.whatsapp}?text=${encodeURIComponent(msg)}`;
+};
+
+
+const PREVIEW_URL = 'https://svbocyguwvhkljzenlnb.supabase.co/functions/v1/sorteio-preview';
+export const getShareUrl = (id: string) => `${PREVIEW_URL}?id=${encodeURIComponent(id)}`;
+export const getBannerUrl = (id: string) => `${PREVIEW_URL}?id=${encodeURIComponent(id)}&img=1`;
+
+export const uploadBannerSorteio = async (sorteioId: string, file: File): Promise<string> => {
+  if (!file.type.startsWith('image/')) throw new Error('Selecione um arquivo de imagem');
+  const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+  const path = `${sorteioId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from('sorteios').upload(path, file, { contentType: file.type, upsert: true });
+  if (error) throw error;
+  const { error: updateError } = await supabase.from('sorteios').update({ imagem_url: path }).eq('id', sorteioId);
+  if (updateError) throw updateError;
+  return path;
+};
+
+export interface DadosApuracao { ganhador1: { num: number; nome: string }; ganhador2?: { num: number; nome: string }; ganhador3?: { num: number; nome: string }; }
+export const homologarApuracao = async (sorteioId: string, dados: DadosApuracao) => {
+  const { error } = await supabase.from('sorteios').update({
+    status: 'encerrado', sorteado_em: new Date().toISOString(),
+    ganhador_1_numero: dados.ganhador1.num, ganhador_1_nome: dados.ganhador1.nome,
+    ganhador_2_numero: dados.ganhador2?.num ?? null, ganhador_2_nome: dados.ganhador2?.nome ?? null,
+    ganhador_3_numero: dados.ganhador3?.num ?? null, ganhador_3_nome: dados.ganhador3?.nome ?? null,
+  }).eq('id', sorteioId);
+  if (error) throw error;
 };

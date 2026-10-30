@@ -4,18 +4,19 @@ import { useParams } from 'react-router-dom';
 import { Gift, Trophy, X, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Sorteio, getSorteio, listNumerosVendidos, brl, padNum, buildWhatsAppUrl, STATUS_LABEL } from '@/lib/sorteios';
+import { Sorteio, NumeroVendido, getSorteio, listVendidos, brl, padNum, buildWhatsAppUrl, STATUS_LABEL, getBannerUrl } from '@/lib/sorteios';
 
 const SorteioPublico = () => {
   const { id = '' } = useParams();
   const [s, setS] = useState<Sorteio | null | undefined>(undefined);
-  const [vendidosArr, setVendidosArr] = useState<number[]>([]);
+  const [vendidosArr, setVendidosArr] = useState<NumeroVendido[]>([]);
   const [sel, setSel] = useState<number[]>([]);
   const [resumo, setResumo] = useState(false);
   useEffect(() => {
-    const carregar = () => listNumerosVendidos(id).then((v) => {
+    const carregar = () => listVendidos(id).then((v) => {
+      const nums = v.map((item) => item.numero);
       setVendidosArr(v);
-      setSel((p) => p.filter((n) => !v.includes(n)));
+      setSel((p) => p.filter((n) => !nums.includes(n)));
     });
     getSorteio(id).then((r) => setS(r ?? null));
     carregar();
@@ -26,7 +27,8 @@ const SorteioPublico = () => {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [id]);
-  const vendidos = useMemo(() => new Set<number>(vendidosArr), [vendidosArr]);
+  const vendidos = useMemo(() => new Set<number>(vendidosArr.map((v) => v.numero)), [vendidosArr]);
+  useEffect(() => { if (s && s.status !== 'publicado') setSel([]); }, [s?.status]);
 
   if (s === undefined) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Carregando…</div>;
   if (!s) {
@@ -47,8 +49,20 @@ const SorteioPublico = () => {
       </header>
 
       <div className="px-4 max-w-3xl mx-auto space-y-4">
+        {s.imagemUrl && <img src={getBannerUrl(s.id)} alt={`Banner de ${s.nome}`} className="w-full max-h-80 rounded-2xl object-cover shadow-lg" />}
         {!aberto && (
           <div className="glass-card rounded-xl p-3 text-sm text-center text-muted-foreground">Sorteio {STATUS_LABEL[s.status].toLowerCase()} — seleção indisponível.</div>
+        )}
+        {s.status === 'encerrado' && s.ganhador1Numero !== undefined && (
+          <section className="glass-card rounded-2xl p-5 border border-primary/40 shadow-lg shadow-primary/10">
+            <h2 className="font-display text-lg font-bold text-primary flex items-center gap-2 mb-3"><Trophy className="w-5 h-5" /> Sorteio Concluído</h2>
+            <div className="space-y-2 text-sm text-foreground">
+              <p>🥇 <b>1º Prêmio: {s.premio1}</b> → Nº {padNum(s.ganhador1Numero, s.numeroFinal)} — {s.ganhador1Nome}</p>
+              {s.ganhador2Numero !== undefined && <p>🥈 <b>2º Prêmio: {s.premio2}</b> → Nº {padNum(s.ganhador2Numero, s.numeroFinal)} — {s.ganhador2Nome}</p>}
+              {s.ganhador3Numero !== undefined && <p>🥉 <b>3º Prêmio: {s.premio3}</b> → Nº {padNum(s.ganhador3Numero, s.numeroFinal)} — {s.ganhador3Nome}</p>}
+            </div>
+            {s.sorteadoEm && <p className="text-xs text-muted-foreground mt-3">Apurado em {new Date(s.sorteadoEm).toLocaleString('pt-BR')}</p>}
+          </section>
         )}
         {s.descricao && <p className="text-sm text-muted-foreground whitespace-pre-line">{s.descricao}</p>}
 
@@ -98,7 +112,7 @@ const SorteioPublico = () => {
         </div>
       </div>
 
-      {sel.length > 0 && (
+      {aberto && sel.length > 0 && (
         <div className="fixed bottom-0 inset-x-0 glass-card border-t border-border p-4">
           <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
             <div>
