@@ -489,7 +489,14 @@ export type Database = {
         Row: {
           created_at: string
           descricao: string
+          ganhador_1_nome: string | null
+          ganhador_1_numero: number | null
+          ganhador_2_nome: string | null
+          ganhador_2_numero: number | null
+          ganhador_3_nome: string | null
+          ganhador_3_numero: number | null
           id: string
+          imagem_url: string | null
           nome: string
           numero_final: number
           numero_inicial: number
@@ -498,6 +505,7 @@ export type Database = {
           premio2: string
           premio3: string
           regras: string
+          sorteado_em: string | null
           status: string
           updated_at: string
           whatsapp: string
@@ -505,7 +513,14 @@ export type Database = {
         Insert: {
           created_at?: string
           descricao?: string
+          ganhador_1_nome?: string | null
+          ganhador_1_numero?: number | null
+          ganhador_2_nome?: string | null
+          ganhador_2_numero?: number | null
+          ganhador_3_nome?: string | null
+          ganhador_3_numero?: number | null
           id?: string
+          imagem_url?: string | null
           nome: string
           numero_final: number
           numero_inicial: number
@@ -514,6 +529,7 @@ export type Database = {
           premio2?: string
           premio3?: string
           regras?: string
+          sorteado_em?: string | null
           status?: string
           updated_at?: string
           whatsapp: string
@@ -521,7 +537,14 @@ export type Database = {
         Update: {
           created_at?: string
           descricao?: string
+          ganhador_1_nome?: string | null
+          ganhador_1_numero?: number | null
+          ganhador_2_nome?: string | null
+          ganhador_2_numero?: number | null
+          ganhador_3_nome?: string | null
+          ganhador_3_numero?: number | null
           id?: string
+          imagem_url?: string | null
           nome?: string
           numero_final?: number
           numero_inicial?: number
@@ -530,6 +553,7 @@ export type Database = {
           premio2?: string
           premio3?: string
           regras?: string
+          sorteado_em?: string | null
           status?: string
           updated_at?: string
           whatsapp?: string
