@@ -1,5 +1,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 const APP_URL = "https://theo-gestao-validades.lovable.app";
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -31,7 +35,6 @@ Deno.serve(async (req) => {
     .maybeSingle();
 
   const target = `${APP_URL}/sorteio/${id}`;
-
   if (!s) {
     return Response.redirect(APP_URL, 302);
   }
@@ -50,16 +53,16 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Detecção de Crawler vs Usuário Real
+  // Detecção de Crawler (robôs do WhatsApp/redes) vs Usuário Real
   const userAgent = req.headers.get("user-agent") || "";
   const isCrawler = CRAWLER_REGEX.test(userAgent);
 
-  // Navegadores humanos vão diretamente para a página do sorteio
+  // Navegadores humanos são redirecionados imediatamente via HTTP 302
   if (!isCrawler) {
     return Response.redirect(target, 302);
   }
 
-  // Crawlers recebem as metatags para gerar a prévia nas redes sociais
+  // Crawlers recebem HTML com metatags Open Graph completas em HTTPS
   const host = req.headers.get("x-forwarded-host") || url.host;
   const self = `https://${host}/functions/v1/sorteio-preview?id=${id}`;
   const title = esc(s.nome);
@@ -77,7 +80,7 @@ Deno.serve(async (req) => {
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${desc}">
   <meta property="og:url" content="${target}">
-  ${img ? `<meta property="og:image" content="${img}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">` : ""}
+  ${img ? `<meta property="og:image" content="${img}"><meta property="og:image:secure_url" content="${img}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">` : ""}
   <meta name="twitter:card" content="${img ? "summary_large_image" : "summary"}">
   <meta name="twitter:title" content="${title}">
   <meta name="twitter:description" content="${desc}">
