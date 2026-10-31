@@ -36,7 +36,7 @@ const SorteiosConfig = () => {
       toast.error('Verifique os campos destacados');
       return;
     }
-    try { await saveSorteio(r.data); } catch { toast.error('Erro ao salvar'); return; }
+    try { await saveSorteio(r.data as Sorteio); } catch { toast.error('Erro ao salvar'); return; }
     recarregar();
     setForm(null);
     setErros({});

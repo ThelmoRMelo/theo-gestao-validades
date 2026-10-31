@@ -36,7 +36,7 @@ export const sorteioSchema = z
   .refine((s) => s.numeroFinal > s.numeroInicial, { message: 'Número final deve ser maior que o inicial', path: ['numeroFinal'] })
   .refine((s) => s.numeroFinal - s.numeroInicial + 1 <= 10000, { message: 'Máximo de 10.000 números', path: ['numeroFinal'] });
 
-export type Sorteio = z.infer<typeof sorteioSchema>;
+export type Sorteio = Omit<z.infer<typeof sorteioSchema>, 'ganhadores'> & { ganhadores: (Vencedor | null)[] };
 
 const KEY = 'sorteios_rascunho';
 
