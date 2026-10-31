@@ -495,15 +495,18 @@ export type Database = {
           ganhador_2_numero: number | null
           ganhador_3_nome: string | null
           ganhador_3_numero: number | null
+          ganhadores_lista: Json
           id: string
           imagem_url: string | null
           nome: string
           numero_final: number
           numero_inicial: number
           preco_unitario: number
+          premio_unico_por_participante: boolean
           premio1: string
           premio2: string
           premio3: string
+          premios_lista: Json
           regras: string
           sorteado_em: string | null
           status: string
@@ -519,15 +522,18 @@ export type Database = {
           ganhador_2_numero?: number | null
           ganhador_3_nome?: string | null
           ganhador_3_numero?: number | null
+          ganhadores_lista?: Json
           id?: string
           imagem_url?: string | null
           nome: string
           numero_final: number
           numero_inicial: number
           preco_unitario: number
+          premio_unico_por_participante?: boolean
           premio1: string
           premio2?: string
           premio3?: string
+          premios_lista?: Json
           regras?: string
           sorteado_em?: string | null
           status?: string
@@ -543,15 +549,18 @@ export type Database = {
           ganhador_2_numero?: number | null
           ganhador_3_nome?: string | null
           ganhador_3_numero?: number | null
+          ganhadores_lista?: Json
           id?: string
           imagem_url?: string | null
           nome?: string
           numero_final?: number
           numero_inicial?: number
           preco_unitario?: number
+          premio_unico_por_participante?: boolean
           premio1?: string
           premio2?: string
           premio3?: string
+          premios_lista?: Json
           regras?: string
           sorteado_em?: string | null
           status?: string
