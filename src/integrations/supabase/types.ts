@@ -485,6 +485,50 @@ export type Database = {
           },
         ]
       }
+      sorteio_reservas: {
+        Row: {
+          comprador_nome: string
+          comprador_telefone: string
+          created_at: string
+          expires_at: string
+          id: string
+          numeros: number[]
+          preco_unitario: number
+          sorteio_id: string
+          status: string
+        }
+        Insert: {
+          comprador_nome: string
+          comprador_telefone: string
+          created_at?: string
+          expires_at?: string
+          id: string
+          numeros: number[]
+          preco_unitario: number
+          sorteio_id: string
+          status?: string
+        }
+        Update: {
+          comprador_nome?: string
+          comprador_telefone?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          numeros?: number[]
+          preco_unitario?: number
+          sorteio_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sorteio_reservas_sorteio_id_fkey"
+            columns: ["sorteio_id"]
+            isOneToOne: false
+            referencedRelation: "sorteios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sorteios: {
         Row: {
           created_at: string
@@ -606,6 +650,21 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      numeros_reservados: { Args: { _sorteio_id: string }; Returns: number[] }
+      reservar_numeros: {
+        Args: {
+          _nome: string
+          _numeros: number[]
+          _pedido_id: string
+          _sorteio_id: string
+          _telefone: string
+        }
+        Returns: Json
+      }
+      resolver_reserva: {
+        Args: { _confirmar: boolean; _pedido_id: string }
+        Returns: undefined
       }
     }
     Enums: {
