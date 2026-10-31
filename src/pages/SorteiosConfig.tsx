@@ -5,13 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Sorteio, SorteioStatus, STATUS_LABEL, sorteioSchema, listSorteios, saveSorteio, deleteSorteio, onlyDigits, brl, getShareUrl, getBannerUrl, uploadBannerSorteio } from '@/lib/sorteios';
+import { Sorteio, SorteioStatus, STATUS_LABEL, sorteioSchema, MAX_PREMIOS, listSorteios, saveSorteio, deleteSorteio, onlyDigits, brl, getShareUrl, getBannerUrl, uploadBannerSorteio } from '@/lib/sorteios';
 
 const vazio = (): Sorteio => ({
   id: crypto.randomUUID(), nome: '', descricao: '', numeroInicial: 1, numeroFinal: 100, precoUnitario: 10,
-  whatsapp: '', premio1: '', premio2: '', premio3: '', regras: '', status: 'preparacao',
+  whatsapp: '', premios: ['', '', ''], premioUnico: false, ganhadores: [], regras: '', status: 'preparacao',
 });
 
 const SorteiosConfig = () => {
@@ -107,9 +108,23 @@ const SorteiosConfig = () => {
             <p className="text-xs text-muted-foreground">Quantidade de números: {Math.max(0, form.numeroFinal - form.numeroInicial + 1)}</p>
             <div><Label>Preço por número (R$) *</Label><Input type="number" step="0.01" min="0" value={form.precoUnitario} onChange={(e) => set('precoUnitario', parseFloat(e.target.value || '0'))} /><Err k="precoUnitario" /></div>
             <div><Label>WhatsApp do responsável * (país + DDD + número)</Label><Input inputMode="numeric" placeholder="5585999999999" value={form.whatsapp} onChange={(e) => set('whatsapp', onlyDigits(e.target.value))} maxLength={13} /><Err k="whatsapp" /></div>
-            <div><Label>1º prêmio *</Label><Input value={form.premio1} onChange={(e) => set('premio1', e.target.value)} /><Err k="premio1" /></div>
-            <div><Label>2º prêmio</Label><Input value={form.premio2} onChange={(e) => set('premio2', e.target.value)} /></div>
-            <div><Label>3º prêmio</Label><Input value={form.premio3} onChange={(e) => set('premio3', e.target.value)} /></div>
+            <div>
+              <Label>Quantidade de prêmios (1 a {MAX_PREMIOS})</Label>
+              <Input type="number" min={1} max={MAX_PREMIOS} value={form.premios.length} onChange={(e) => {
+                const n = Math.min(MAX_PREMIOS, Math.max(1, parseInt(e.target.value || '1')));
+                set('premios', Array.from({ length: n }, (_, i) => form.premios[i] ?? ''));
+              }} className="w-28" />
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {form.premios.map((p, i) => (
+                <div key={i}><Label>{i + 1}º prêmio *</Label><Input value={p} maxLength={200} onChange={(e) => set('premios', form.premios.map((x, j) => (j === i ? e.target.value : x)))} /></div>
+              ))}
+            </div>
+            <Err k="premios" />
+            <div className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
+              <div><Label htmlFor="premio-unico">Prêmio único por participante</Label><p className="text-xs text-muted-foreground">Impede que a mesma pessoa ganhe mais de um prêmio neste sorteio.</p></div>
+              <Switch id="premio-unico" checked={form.premioUnico} onCheckedChange={(v) => set('premioUnico', v)} />
+            </div>
             <div><Label>Regras de participação</Label><Textarea value={form.regras} onChange={(e) => set('regras', e.target.value)} maxLength={2000} /></div>
             <div>
               <Label>Status</Label>

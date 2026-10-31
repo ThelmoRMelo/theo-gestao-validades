@@ -53,13 +53,11 @@ const SorteioPublico = () => {
         {!aberto && (
           <div className="glass-card rounded-xl p-3 text-sm text-center text-muted-foreground">Sorteio {STATUS_LABEL[s.status].toLowerCase()} — seleção indisponível.</div>
         )}
-        {s.status === 'encerrado' && s.ganhador1Numero !== undefined && (
+        {s.status === 'encerrado' && s.ganhadores.some(Boolean) && (
           <section className="glass-card rounded-2xl p-5 border border-primary/40 shadow-lg shadow-primary/10">
             <h2 className="font-display text-lg font-bold text-primary flex items-center gap-2 mb-3"><Trophy className="w-5 h-5" /> Sorteio Concluído</h2>
             <div className="space-y-2 text-sm text-foreground">
-              <p>🥇 <b>1º Prêmio: {s.premio1}</b> → Nº {padNum(s.ganhador1Numero, s.numeroFinal)} — {s.ganhador1Nome}</p>
-              {s.ganhador2Numero !== undefined && <p>🥈 <b>2º Prêmio: {s.premio2}</b> → Nº {padNum(s.ganhador2Numero, s.numeroFinal)} — {s.ganhador2Nome}</p>}
-              {s.ganhador3Numero !== undefined && <p>🥉 <b>3º Prêmio: {s.premio3}</b> → Nº {padNum(s.ganhador3Numero, s.numeroFinal)} — {s.ganhador3Nome}</p>}
+              {s.ganhadores.map((g, i) => g && <p key={i}>{['🥇', '🥈', '🥉'][i] ?? '🏅'} <b>{i + 1}º Prêmio: {s.premios[i]}</b> → Nº {padNum(g.num, s.numeroFinal)} — {g.nome}</p>)}
             </div>
             {s.sorteadoEm && <p className="text-xs text-muted-foreground mt-3">Apurado em {new Date(s.sorteadoEm).toLocaleString('pt-BR')}</p>}
           </section>
@@ -68,7 +66,7 @@ const SorteioPublico = () => {
 
         <div className="glass-card rounded-xl p-4 space-y-2">
           <h2 className="font-semibold text-foreground flex items-center gap-2"><Trophy className="w-4 h-4 text-primary" /> Prêmios</h2>
-          {[s.premio1, s.premio2, s.premio3].map((p, i) => p && <p key={i} className="text-sm text-foreground"><b>{i + 1}º:</b> {p}</p>)}
+          {s.premios.map((p, i) => p && <p key={i} className="text-sm text-foreground"><b>{i + 1}º:</b> {p}</p>)}
         </div>
 
         {s.regras && (
@@ -77,6 +75,7 @@ const SorteioPublico = () => {
             <p className="text-sm text-muted-foreground whitespace-pre-line">{s.regras}</p>
           </div>
         )}
+        {s.premioUnico && <div className="glass-card rounded-xl p-3 text-sm text-foreground"><b>Regra:</b> cada participante só pode ser premiado uma única vez.</div>}
 
         <div className="grid grid-cols-2 gap-3">
           <div className="glass-card rounded-xl p-3 text-center"><p className="text-xs text-muted-foreground">Preço por número</p><p className="font-bold text-primary">{brl(s.precoUnitario)}</p></div>
