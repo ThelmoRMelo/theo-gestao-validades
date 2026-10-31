@@ -29,6 +29,13 @@
       "when": 1793444677819,
       "tag": "0003_sorteios_premios_dinamicos_premio_unico",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793450421152,
+      "tag": "0004_sorteio_reservas",
+      "breakpoints": true
     }
   ]
 }
