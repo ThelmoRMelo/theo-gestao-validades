@@ -91,7 +91,7 @@ const SorteioApuracao = () => {
             </div>
           </div>
         ) : (
-          <div className="space-y-2"><Label htmlFor={`manual-${i}`}>Ou digite o número sorteado e pressione Enter</Label><Input id={`manual-${i}`} type="number" inputMode="numeric" enterKeyHint="done" value={entrada[i]} onChange={(e) => setEntrada((v) => v.map((x, j) => j === i ? e.target.value : x))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); usarEntrada(i); } }} onBlur={() => { if (entrada[i]) usarEntrada(i); }} placeholder="Número vendido" />{Number(entrada[i]) > 0 && vencedorDe(Number(entrada[i])) && <p className="text-xs text-muted-foreground">Comprador: {vencedorDe(Number(entrada[i]))?.nome}</p>}</div>
+          <div className="space-y-2"><Label htmlFor={`manual-${i}`}>Ou digite o número sorteado e pressione Enter</Label><Input id={`manual-${i}`} type="number" inputMode="numeric" enterKeyHint="done" value={entrada[i]} onChange={(e) => setEntrada((v) => v.map((x, j) => j === i ? e.target.value : x))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); usarEntrada(i); } }} placeholder="Número vendido" />{Number(entrada[i]) > 0 && vencedorDe(Number(entrada[i])) && <p className="text-xs text-muted-foreground">Comprador: {vencedorDe(Number(entrada[i]))?.nome}</p>}</div>
         )}
       </section>)}
       <Button className="w-full" disabled={salvando || !ganhadores[0] || sorteio.status === 'encerrado'} onClick={homologar}><Trophy className="w-4 h-4 mr-2" />{salvando ? 'Salvando…' : 'Homologar e Salvar Ganhadores'}</Button>
