@@ -226,7 +226,7 @@ export const RoletaSorteioModal = ({
   return (
     <Dialog open={open} onOpenChange={(val) => fase !== 'girando' && onOpenChange(val)}>
       {fase === 'parado' && <div className="roleta-confetti-layer" aria-hidden="true">{confetes.map((p, i) => <span key={i} className="roleta-confetti-piece" style={{ left: `${p.left}%`, animationDelay: `${p.delay}s`, animationDuration: `${p.duration}s`, backgroundColor: p.color, transform: `rotate(${p.rotation}deg)` }} />)}</div>}
-      <DialogContent className="w-[94vw] max-w-lg max-h-[92vh] overflow-y-auto bg-zinc-950 border-emerald-500/30 text-zinc-100 p-4 sm:p-6 mx-auto rounded-2xl shadow-2xl">
+      <DialogContent className="w-[94vw] max-w-lg max-h-[90vh] overflow-y-auto overscroll-contain flex flex-col items-stretch justify-start gap-3 bg-zinc-950 border-emerald-500/30 text-zinc-100 p-3 sm:p-5 rounded-2xl shadow-2xl">
         <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-zinc-800 pr-8">
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5" /> Roleta Oficial de Apuração</span>
@@ -237,7 +237,7 @@ export const RoletaSorteioModal = ({
           </Button>
         </DialogHeader>
 
-        <div className="relative my-6 select-none">
+        <div className="relative my-3 sm:my-4 select-none shrink-0">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20 pointer-events-none"><div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[14px] border-t-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]" /></div>
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 z-20 pointer-events-none"><div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[14px] border-b-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]" /></div>
           <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-gradient-to-b from-emerald-400 via-emerald-300 to-emerald-400 opacity-70 z-10 pointer-events-none shadow-[0_0_12px_rgba(52,211,153,0.9)]" />
@@ -256,7 +256,7 @@ export const RoletaSorteioModal = ({
           </div>
         </div>
 
-        <div className="w-full max-w-md mx-auto space-y-3">
+        <div className="w-full max-w-md mx-auto space-y-3 shrink-0">
         {fase === 'pronto' && <div className="text-center space-y-4"><p className="text-sm text-zinc-400"><strong className="text-emerald-400">{concorrentes.length}</strong> números concorrem a este prêmio.</p><Button size="lg" onClick={iniciarGiro} disabled={!vencedor} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base h-12 shadow-[0_0_20px_rgba(5,150,105,0.4)]"><Trophy className="w-5 h-5 mr-2" /> Rodar Roleta da Sorte</Button></div>}
         {fase === 'girando' && <div className="text-center py-2 animate-pulse"><span className="text-sm font-semibold tracking-wider text-emerald-400 uppercase">Desacelerando... Quem será o contemplado?</span></div>}
         {fase === 'parado' && vencedorSorteado && <div className="space-y-4 animate-in fade-in zoom-in-95 duration-500">
