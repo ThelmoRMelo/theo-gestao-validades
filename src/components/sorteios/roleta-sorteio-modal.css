@@ -1,0 +1,29 @@
+.roleta-confetti-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.roleta-confetti-piece {
+  position: absolute;
+  top: -1rem;
+  width: 0.55rem;
+  height: 0.85rem;
+  border-radius: 2px;
+  opacity: 0;
+  animation-name: roleta-confetti-fall;
+  animation-timing-function: cubic-bezier(0.22, 0.7, 0.35, 1);
+  animation-fill-mode: both;
+}
+
+@keyframes roleta-confetti-fall {
+  0% { opacity: 0; transform: translate3d(0, -3vh, 0) rotate(0deg); }
+  8% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(8vw, 105vh, 0) rotate(900deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roleta-confetti-piece { animation-duration: 0.01ms !important; }
+}

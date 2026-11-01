@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Trophy, Dices } from 'lucide-react';
+import { ArrowLeft, Trophy, Dices, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { Sorteio, NumeroVendido, Vencedor, getSorteio, listVendidos, homologarApuracao, padNum, chavePessoa } from '@/lib/sorteios';
+import { RoletaSorteioModal } from '@/components/sorteios/RoletaSorteioModal';
 const SorteioApuracao = () => {
   const { id = '' } = useParams();
   const navigate = useNavigate();
@@ -15,7 +16,8 @@ const SorteioApuracao = () => {
   const [ganhadores, setGanhadores] = useState<(Vencedor | null)[]>([]);
   const [entrada, setEntrada] = useState<string[]>([]);
   const [premioUnico, setPremioUnico] = useState(false);
-  const [animando, setAnimando] = useState<number | null>(null);
+  const [roletaAberta, setRoletaAberta] = useState(false);
+  const [indiceSorteando, setIndiceSorteando] = useState<number | null>(null);
   const [salvando, setSalvando] = useState(false);
   useEffect(() => { getSorteio(id).then((s) => { setSorteio(s ?? null); if (s) { setGanhadores(s.premios.map((_, i) => s.ganhadores[i] ?? null)); setEntrada(s.premios.map(() => '')); setPremioUnico(s.premioUnico); } }); listVendidos(id).then(setVendidos).catch(() => toast.error('Erro ao carregar números vendidos')); }, [id]);
   const premios = sorteio?.premios ?? [];
@@ -27,16 +29,21 @@ const SorteioApuracao = () => {
     return vendidos.filter((v) => !ganhadores.some((g, i) => i !== indice && g?.num === v.numero) && !bloqueadas.has(chavePessoa(v.comprador_nome, v.comprador_telefone)));
   };
   const vencedorDe = (num: number): Vencedor | null => { const comprador = vendidos.find((v) => v.numero === num); return comprador ? { num, nome: comprador.comprador_nome } : null; };
-  const sortear = (indice: number) => {
-    const concorrentes = concorrentesPara(indice);
-    if (concorrentes.length === 0) return toast.error('Não há números vendidos disponíveis para este prêmio');
-    setAnimando(indice);
-    let ticks = 0;
-    const timer = window.setInterval(() => {
-      const escolhido = concorrentes[Math.floor(Math.random() * concorrentes.length)];
-      setGanhadores((prev) => prev.map((g, i) => i === indice ? { num: escolhido.numero, nome: escolhido.comprador_nome } : g));
-      if (++ticks >= 18) { window.clearInterval(timer); setAnimando(null); }
-    }, 70);
+  const abrirRoleta = (indice: number) => {
+    if (sorteio?.status === 'encerrado') return;
+    if (concorrentesPara(indice).length === 0) return toast.error('Não há números vendidos disponíveis para este prêmio.');
+    setIndiceSorteando(indice);
+    setRoletaAberta(true);
+  };
+  const handleConfirmarVencedorRoleta = (vencedor: Vencedor) => {
+    if (indiceSorteando === null) return;
+    setGanhadores((prev) => prev.map((g, i) => (i === indiceSorteando ? vencedor : g)));
+    toast.success(`Ganhador do ${indiceSorteando + 1}º Prêmio definido!`);
+    setRoletaAberta(false);
+    setIndiceSorteando(null);
+  };
+  const limparGanhador = (indice: number) => {
+    setGanhadores((prev) => prev.map((g, i) => (i === indice ? null : g)));
   };
   const usarEntrada = (indice: number) => {
     const num = Number(entrada[indice]);
@@ -68,12 +75,25 @@ const SorteioApuracao = () => {
       <div className="glass-card rounded-xl p-4 flex items-start justify-between gap-3"><div><Label htmlFor="unico-apuracao">Prêmio único por participante</Label><p className="text-xs text-muted-foreground">{premioUnico ? 'Quem já ganhou não concorre aos próximos prêmios.' : 'A mesma pessoa pode ganhar mais de um prêmio.'}{sorteio.premioUnico !== premioUnico && ' (alterado em relação à regra do sorteio)'}</p></div><Switch id="unico-apuracao" checked={premioUnico} onCheckedChange={setPremioUnico} /></div>
       {premios.map((premio, i) => premio && <section key={i} className="glass-card rounded-xl p-4 space-y-3">
         <h2 className="font-semibold text-foreground">{i + 1}º Prêmio · {premio}</h2>
-        <div className="flex items-center gap-3"><Button disabled={animando !== null || !vendidos.length} onClick={() => sortear(i)}><Dices className="w-4 h-4 mr-2" />{animando === i ? 'Sorteando…' : `Sortear ${i + 1}º Prêmio`}</Button>{ganhadores[i] && <p className="text-sm"><b className="text-primary">Nº {padNum(ganhadores[i]!.num, sorteio.numeroFinal)}</b> · {ganhadores[i]!.nome}</p>}</div>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button disabled={!vendidos.length || sorteio.status === 'encerrado'} onClick={() => abrirRoleta(i)}><Dices className="w-4 h-4 mr-2" />{ganhadores[i] ? `Sortear Novamente ${i + 1}º` : `Girar Roleta (${i + 1}º Prêmio)`}</Button>
+          <span className="text-xs text-muted-foreground">{concorrentesPara(i).length} elegíveis</span>
+          {ganhadores[i] && <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-lg"><p className="text-sm text-emerald-300"><b>Nº {padNum(ganhadores[i]!.num, sorteio.numeroFinal)}</b> · {ganhadores[i]!.nome}</p><Button variant="ghost" size="icon" className="h-6 w-6 text-zinc-400 hover:text-red-400" onClick={() => limparGanhador(i)} title="Limpar ganhador"><RotateCcw className="w-3 h-3" /></Button></div>}
+        </div>
         <div className="space-y-2"><Label htmlFor={`manual-${i}`}>Entrada manual (Loteria Federal / globo)</Label><div className="flex gap-2"><Input id={`manual-${i}`} type="number" value={entrada[i]} onChange={(e) => setEntrada((v) => v.map((x, j) => j === i ? e.target.value : x))} placeholder="Número vendido" /><Button variant="secondary" onClick={() => usarEntrada(i)}>Identificar</Button></div>{Number(entrada[i]) > 0 && vencedorDe(Number(entrada[i])) && <p className="text-xs text-muted-foreground">Comprador: {vencedorDe(Number(entrada[i]))?.nome}</p>}</div>
       </section>)}
       <Button className="w-full" disabled={salvando || !ganhadores[0] || sorteio.status === 'encerrado'} onClick={homologar}><Trophy className="w-4 h-4 mr-2" />{salvando ? 'Salvando…' : 'Homologar e Salvar Ganhadores'}</Button>
       {sorteio.status === 'encerrado' && <p className="text-center text-sm text-muted-foreground">Este sorteio já está encerrado.</p>}
     </main>
+    {indiceSorteando !== null && <RoletaSorteioModal
+      open={roletaAberta}
+      onOpenChange={(open) => { setRoletaAberta(open); if (!open) setIndiceSorteando(null); }}
+      premioNome={premios[indiceSorteando] || ''}
+      premioNumero={indiceSorteando + 1}
+      numeroFinal={sorteio.numeroFinal}
+      concorrentes={concorrentesPara(indiceSorteando)}
+      onConfirmarGanhador={handleConfirmarVencedorRoleta}
+    />}
   </div>;
 };
 export default SorteioApuracao;
