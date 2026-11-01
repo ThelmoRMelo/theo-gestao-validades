@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Undo2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Undo2, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Sorteio, NumeroVendido, getSorteio, listVendidos, darBaixa, estornar, parseNumeros, padNum, brl, onlyDigits } from '@/lib/sorteios';
+import { Sorteio, NumeroVendido, SorteioReserva, getSorteio, listVendidos, listarReservasPendentes, resolverReserva, darBaixa, estornar, parseNumeros, padNum, brl, onlyDigits } from '@/lib/sorteios';
 
 const SorteioVendas = () => {
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const [s, setS] = useState<Sorteio | null>(null);
   const [vendidos, setVendidos] = useState<NumeroVendido[]>([]);
+  const [reservas, setReservas] = useState<SorteioReserva[]>([]);
+  const [agora, setAgora] = useState(Date.now());
   const [numerosTxt, setNumerosTxt] = useState('');
   const [nome, setNome] = useState('');
   const [tel, setTel] = useState('');
@@ -21,7 +23,11 @@ const SorteioVendas = () => {
   const [busca, setBusca] = useState('');
 
   const carregar = useCallback(async () => {
-    setVendidos(await listVendidos(id));
+    try {
+      const [listaVendidos, listaReservas] = await Promise.all([listVendidos(id), listarReservasPendentes(id)]);
+      setVendidos(listaVendidos);
+      setReservas(listaReservas);
+    } catch { toast.error('Erro ao atualizar vendas e reservas'); }
   }, [id]);
 
   useEffect(() => {
@@ -30,19 +36,31 @@ const SorteioVendas = () => {
     const ch = supabase
       .channel(`vendas-${id}-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sorteio_numeros', filter: `sorteio_id=eq.${id}` }, () => carregar())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sorteio_reservas', filter: `sorteio_id=eq.${id}` }, () => carregar())
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const relogio = window.setInterval(() => setAgora(Date.now()), 1000);
+    const atualizarExpiradas = window.setInterval(() => carregar(), 30_000);
+    return () => { window.clearInterval(relogio); window.clearInterval(atualizarExpiradas); supabase.removeChannel(ch); };
   }, [id, carregar]);
 
   const setVendidosNum = useMemo(() => new Set(vendidos.map((v) => v.numero)), [vendidos]);
+  const reservasAtivas = useMemo(() => reservas.filter((r) => new Date(r.expires_at).getTime() > agora), [reservas, agora]);
+  const setReservadosNum = useMemo(() => new Set(reservasAtivas.flatMap((r) => r.numeros)), [reservasAtivas]);
   const escolhidos = parseNumeros(numerosTxt);
 
   if (!s) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Carregando…</div>;
 
   const foraFaixa = escolhidos.filter((n) => n < s.numeroInicial || n > s.numeroFinal);
   const jaVendidos = escolhidos.filter((n) => setVendidosNum.has(n));
-  const validos = escolhidos.filter((n) => !foraFaixa.includes(n) && !jaVendidos.includes(n));
+  const jaReservados = escolhidos.filter((n) => setReservadosNum.has(n));
+  const validos = escolhidos.filter((n) => !foraFaixa.includes(n) && !jaVendidos.includes(n) && !jaReservados.includes(n));
   const total = s.numeroFinal - s.numeroInicial + 1;
+  const calcularTempoRestante = (expiresAt: string) => {
+    const diff = Math.max(0, Math.floor((new Date(expiresAt).getTime() - agora) / 1000));
+    const m = Math.floor(diff / 60);
+    const seg = diff % 60;
+    return `${m}m ${seg < 10 ? '0' : ''}${seg}s`;
+  };
 
   const confirmar = async () => {
     if (!nome.trim()) return toast.error('Informe o nome do comprador');
@@ -73,7 +91,7 @@ const SorteioVendas = () => {
       <div className="px-4 max-w-2xl mx-auto space-y-4">
         <div className="grid grid-cols-3 gap-3">
           <div className="glass-card rounded-xl p-3 text-center"><p className="text-xs text-muted-foreground">Vendidos</p><p className="font-bold text-primary">{vendidos.length}</p></div>
-          <div className="glass-card rounded-xl p-3 text-center"><p className="text-xs text-muted-foreground">Disponíveis</p><p className="font-bold text-primary">{total - vendidos.length}</p></div>
+          <div className="glass-card rounded-xl p-3 text-center"><p className="text-xs text-muted-foreground">Disponíveis</p><p className="font-bold text-primary">{total - vendidos.length - setReservadosNum.size}</p></div>
           <div className="glass-card rounded-xl p-3 text-center"><p className="text-xs text-muted-foreground">Arrecadado</p><p className="font-bold text-primary">{brl(vendidos.length * s.precoUnitario)}</p></div>
         </div>
 
@@ -87,13 +105,60 @@ const SorteioVendas = () => {
                 {validos.length > 0 && <p className="text-primary">Para baixar: {validos.map((n) => padNum(n, s.numeroFinal)).join(', ')} · {brl(validos.length * s.precoUnitario)}</p>}
                 {jaVendidos.length > 0 && <p className="text-destructive">Já vendidos (ignorados): {jaVendidos.join(', ')}</p>}
                 {foraFaixa.length > 0 && <p className="text-destructive">Fora da faixa (ignorados): {foraFaixa.join(', ')}</p>}
+                {jaReservados.length > 0 && <p className="text-amber-400">Em reserva ativa (use o pedido pendente para confirmar): {jaReservados.join(', ')}</p>}
               </div>
             )}
           </div>
           <div><Label>Nome do comprador *</Label><Input value={nome} onChange={(e) => setNome(e.target.value)} maxLength={100} /></div>
           <div><Label>WhatsApp do comprador</Label><Input inputMode="numeric" value={tel} onChange={(e) => setTel(onlyDigits(e.target.value))} maxLength={13} /></div>
           <div><Label>Observação</Label><Input value={obs} onChange={(e) => setObs(e.target.value)} maxLength={200} placeholder="Ex.: pago via Pix" /></div>
-          <Button className="w-full" disabled={salvando} onClick={confirmar}><CheckCircle2 className="w-4 h-4 mr-2" /> Confirmar venda / Dar baixa</Button>
+          <Button className="w-full" disabled={salvando || validos.length === 0} onClick={confirmar}><CheckCircle2 className="w-4 h-4 mr-2" /> Confirmar venda / Dar baixa</Button>
+        </div>
+
+        <div className="glass-card rounded-xl p-4 space-y-3 border border-amber-500/30">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="font-semibold text-foreground flex items-center gap-2"><Clock className="w-4 h-4 text-amber-400" /> Pedidos Pendentes ({reservasAtivas.length})</h2>
+            <span className="text-xs text-muted-foreground">Reservas ativas de 30 min</span>
+          </div>
+          {reservasAtivas.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Nenhum pedido pendente no momento.</p>
+          ) : (
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {reservasAtivas.map((res) => {
+                const telefoneWa = res.comprador_telefone.startsWith('55') ? res.comprador_telefone : `55${res.comprador_telefone}`;
+                return <div key={res.id} className="border border-border rounded-xl p-3 bg-card/40 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-foreground text-sm">{res.comprador_nome}</p>
+                      <a href={`https://wa.me/${telefoneWa}`} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">WhatsApp: {res.comprador_telefone}</a>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="inline-block px-2 py-0.5 rounded text-xs font-mono font-bold bg-amber-500/20 text-amber-400">Expira em: {calcularTempoRestante(res.expires_at)}</span>
+                      <p className="text-xs font-bold text-primary mt-1">{brl(res.numeros.length * res.preco_unitario)}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {res.numeros.map((n) => <span key={n} className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs font-mono font-bold">{padNum(n, s.numeroFinal)}</span>)}
+                  </div>
+                  <div className="flex flex-wrap items-center justify-end gap-2 pt-1 border-t border-border/50">
+                    <Button size="sm" variant="outline" onClick={() => {
+                      setNumerosTxt(res.numeros.join(', ')); setNome(res.comprador_nome); setTel(res.comprador_telefone); setObs(`Pedido #${res.id.slice(0, 8)}`);
+                      toast.info('Dados carregados. Para dar baixa manual nesses números, cancele a reserva primeiro.');
+                    }}>Carregar no Form</Button>
+                    <Button size="sm" variant="destructive" onClick={async () => {
+                      if (!confirm(`Cancelar reserva de ${res.comprador_nome} e liberar os números?`)) return;
+                      try { await resolverReserva(res.id, false); toast.success('Reserva cancelada e números liberados'); await carregar(); }
+                      catch (err) { toast.error(err instanceof Error ? err.message : 'Erro ao cancelar reserva'); }
+                    }}>Cancelar</Button>
+                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={async () => {
+                      try { await resolverReserva(res.id, true); toast.success(`Pedido de ${res.comprador_nome} confirmado e números baixados!`); await carregar(); }
+                      catch (err) { toast.error(err instanceof Error ? err.message : 'Erro ao confirmar pedido'); }
+                    }}><CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Confirmar (1 clique)</Button>
+                  </div>
+                </div>;
+              })}
+            </div>
+          )}
         </div>
 
         <div className="glass-card rounded-xl p-4 space-y-3">

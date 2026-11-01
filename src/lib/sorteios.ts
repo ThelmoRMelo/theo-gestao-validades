@@ -100,6 +100,70 @@ export const deleteSorteio = async (id: string) => {
 
 export interface NumeroVendido { id: string; numero: number; comprador_nome: string; comprador_telefone: string; observacao: string; created_at: string; }
 
+
+export interface SorteioReserva {
+  id: string;
+  sorteio_id: string;
+  numeros: number[];
+  comprador_nome: string;
+  comprador_telefone: string;
+  preco_unitario: number;
+  status: 'pendente' | 'confirmado' | 'cancelado';
+  expires_at: string;
+  created_at: string;
+}
+
+/** Retorna somente os números reservados, sem expor dados do comprador. */
+export const listarNumerosReservados = async (sorteioId: string): Promise<number[]> => {
+  const { data, error } = await supabase.rpc('numeros_reservados', { _sorteio_id: sorteioId });
+  if (error) {
+    console.error('Erro ao listar números reservados:', error);
+    return [];
+  }
+  return (data ?? []) as number[];
+};
+
+/** Cria uma reserva atômica de 30 minutos. */
+export const reservarNumeros = async (
+  sorteioId: string,
+  pedidoId: string,
+  numeros: number[],
+  nome: string,
+  telefone: string,
+): Promise<{ id: string; expires_at: string; preco_unitario: number }> => {
+  const { data, error } = await supabase.rpc('reservar_numeros', {
+    _sorteio_id: sorteioId,
+    _pedido_id: pedidoId,
+    _numeros: numeros,
+    _nome: nome.trim(),
+    _telefone: telefone,
+  });
+  if (error) throw error;
+  return data as unknown as { id: string; expires_at: string; preco_unitario: number };
+};
+
+/** Lista as reservas pendentes ainda válidas para o painel de vendas. */
+export const listarReservasPendentes = async (sorteioId: string): Promise<SorteioReserva[]> => {
+  const { data, error } = await supabase
+    .from('sorteio_reservas')
+    .select('*')
+    .eq('sorteio_id', sorteioId)
+    .eq('status', 'pendente')
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as SorteioReserva[];
+};
+
+/** Confirma a baixa do pedido ou cancela e libera os números. */
+export const resolverReserva = async (pedidoId: string, confirmar: boolean): Promise<void> => {
+  const { error } = await supabase.rpc('resolver_reserva', {
+    _pedido_id: pedidoId,
+    _confirmar: confirmar,
+  });
+  if (error) throw error;
+};
+
 export const listVendidos = async (sorteioId: string): Promise<NumeroVendido[]> => {
   const { data, error } = await supabase.from('sorteio_numeros').select('*').eq('sorteio_id', sorteioId).order('numero');
   if (error) throw error;
@@ -135,17 +199,19 @@ export const onlyDigits = (v: string) => v.replace(/\D/g, '');
 export const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 export const padNum = (n: number, final: number) => String(n).padStart(String(final).length, '0');
 
-export const buildWhatsAppUrl = (s: Sorteio, numeros: number[]) => {
+export const buildWhatsAppUrl = (s: Sorteio, numeros: number[], pedidoId?: string, nome?: string) => {
   const ordenados = [...numeros].sort((a, b) => a - b).map((n) => padNum(n, s.numeroFinal));
   const msg = [
     `Olá! Tenho interesse no sorteio *${s.nome}*.`,
-    `Números escolhidos: ${ordenados.join(', ')}`,
-    `Quantidade: ${numeros.length}`,
-    `Preço por número: ${brl(s.precoUnitario)}`,
-    `Valor total: ${brl(s.precoUnitario * numeros.length)}`,
+    pedidoId ? `*Pedido:* #${pedidoId.slice(0, 8).toUpperCase()}` : '',
+    nome ? `*Comprador:* ${nome}` : '',
+    `*Números escolhidos:* ${ordenados.join(', ')}`,
+    `*Quantidade:* ${numeros.length}`,
+    `*Preço por número:* ${brl(s.precoUnitario)}`,
+    `*Valor total:* ${brl(s.precoUnitario * numeros.length)}`,
     '',
-    'Poderia me enviar as instruções para pagamento e confirmação da aquisição?',
-  ].join('\n');
+    'Minha reserva foi gerada no sistema. Poderia me enviar as instruções para pagamento via Pix e confirmação?',
+  ].filter(Boolean).join('\n');
   return `https://wa.me/${s.whatsapp}?text=${encodeURIComponent(msg)}`;
 };
 
