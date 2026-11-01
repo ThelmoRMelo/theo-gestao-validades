@@ -136,11 +136,11 @@ export const RoletaSorteioModal = ({
     setVencedorSorteado(null);
     void getAudioContext();
 
-    const larguraContainer = containerRef.current?.offsetWidth || 600;
-    const centroConteudo = larguraContainer / 2 - 16;
-    const posicaoVencedor = WINNER_INDEX * CARD_FULL + CARD_WIDTH / 2;
-    const jitter = Math.floor(Math.random() * 30) - 15;
-    const destinoFinal = Math.max(0, posicaoVencedor - centroConteudo + jitter);
+    const larguraVisor = containerRef.current?.clientWidth || 400;
+    const centroVisor = larguraVisor / 2;
+    const centroVencedor = WINNER_INDEX * CARD_FULL + CARD_WIDTH / 2;
+    // O trilho não tem padding horizontal, então ambos os centros usam a mesma origem.
+    const destinoFinal = Math.max(0, centroVencedor - centroVisor);
     frameRef.current = window.requestAnimationFrame(() => setOffset(destinoFinal));
 
     const inicio = Date.now();
@@ -226,7 +226,7 @@ export const RoletaSorteioModal = ({
   return (
     <Dialog open={open} onOpenChange={(val) => fase !== 'girando' && onOpenChange(val)}>
       {fase === 'parado' && <div className="roleta-confetti-layer" aria-hidden="true">{confetes.map((p, i) => <span key={i} className="roleta-confetti-piece" style={{ left: `${p.left}%`, animationDelay: `${p.delay}s`, animationDuration: `${p.duration}s`, backgroundColor: p.color, transform: `rotate(${p.rotation}deg)` }} />)}</div>}
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-zinc-950 border-emerald-500/30 text-zinc-100 p-6">
+      <DialogContent className="w-[94vw] max-w-lg max-h-[92vh] overflow-y-auto bg-zinc-950 border-emerald-500/30 text-zinc-100 p-4 sm:p-6 mx-auto rounded-2xl shadow-2xl">
         <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-zinc-800 pr-8">
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5" /> Roleta Oficial de Apuração</span>
@@ -241,9 +241,9 @@ export const RoletaSorteioModal = ({
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20 pointer-events-none"><div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[14px] border-t-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]" /></div>
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 z-20 pointer-events-none"><div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[14px] border-b-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]" /></div>
           <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-gradient-to-b from-emerald-400 via-emerald-300 to-emerald-400 opacity-70 z-10 pointer-events-none shadow-[0_0_12px_rgba(52,211,153,0.9)]" />
-          <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-zinc-950 to-transparent z-10 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-zinc-950 to-transparent z-10 pointer-events-none" />
-          <div ref={containerRef} className="w-full h-36 bg-zinc-900/80 rounded-2xl border border-zinc-800 flex items-center overflow-hidden px-4 relative shadow-inner">
+          <div className="absolute inset-y-0 left-0 w-12 sm:w-20 bg-gradient-to-r from-zinc-950 to-transparent z-10 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-12 sm:w-20 bg-gradient-to-l from-zinc-950 to-transparent z-10 pointer-events-none" />
+          <div ref={containerRef} className="w-full h-36 bg-zinc-900/90 rounded-2xl border border-zinc-800 flex items-center overflow-hidden relative shadow-inner">
             <div className="flex items-center" style={{ gap: `${CARD_GAP}px`, transform: `translateX(-${offset}px)`, transition: fase === 'girando' ? `transform ${ANIMATION_DURATION_MS}ms cubic-bezier(0.12, 0.8, 0.15, 1)` : 'none' }}>
               {cartoes.map((item, idx) => {
                 const isWinner = fase === 'parado' && idx === WINNER_INDEX;
@@ -256,6 +256,7 @@ export const RoletaSorteioModal = ({
           </div>
         </div>
 
+        <div className="w-full max-w-md mx-auto space-y-3">
         {fase === 'pronto' && <div className="text-center space-y-4"><p className="text-sm text-zinc-400"><strong className="text-emerald-400">{concorrentes.length}</strong> números concorrem a este prêmio.</p><Button size="lg" onClick={iniciarGiro} disabled={!vencedor} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base h-12 shadow-[0_0_20px_rgba(5,150,105,0.4)]"><Trophy className="w-5 h-5 mr-2" /> Rodar Roleta da Sorte</Button></div>}
         {fase === 'girando' && <div className="text-center py-2 animate-pulse"><span className="text-sm font-semibold tracking-wider text-emerald-400 uppercase">Desacelerando... Quem será o contemplado?</span></div>}
         {fase === 'parado' && vencedorSorteado && <div className="space-y-4 animate-in fade-in zoom-in-95 duration-500">
@@ -271,6 +272,7 @@ export const RoletaSorteioModal = ({
           </div>
           <Button size="lg" onClick={handleConfirmar} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 shadow-[0_0_16px_rgba(5,150,105,0.4)]"><CheckCircle2 className="w-5 h-5 mr-2" /> Confirmar e Salvar no {premioNumero}º Prêmio</Button>
         </div>}
+        </div>
       </DialogContent>
     </Dialog>
   );
