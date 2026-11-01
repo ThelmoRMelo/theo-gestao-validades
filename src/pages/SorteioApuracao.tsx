@@ -29,6 +29,7 @@ const SorteioApuracao = () => {
     return vendidos.filter((v) => !ganhadores.some((g, i) => i !== indice && g?.num === v.numero) && !bloqueadas.has(chavePessoa(v.comprador_nome, v.comprador_telefone)));
   };
   const vencedorDe = (num: number): Vencedor | null => { const comprador = vendidos.find((v) => v.numero === num); return comprador ? { num, nome: comprador.comprador_nome } : null; };
+  const numerosDoParticipante = (num: number) => { const k = chaveDoNumero(num); if (!k) return [num]; return vendidos.filter((v) => chavePessoa(v.comprador_nome, v.comprador_telefone) === k).map((v) => v.numero).sort((a, b) => a - b); };
   const abrirRoleta = (indice: number) => {
     if (sorteio?.status === 'encerrado') return;
     if (concorrentesPara(indice).length === 0) return toast.error('Não há números vendidos disponíveis para este prêmio.');
@@ -80,7 +81,18 @@ const SorteioApuracao = () => {
           <span className="text-xs text-muted-foreground">{concorrentesPara(i).length} elegíveis</span>
           {ganhadores[i] && <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-lg"><p className="text-sm text-emerald-300"><b>Nº {padNum(ganhadores[i]!.num, sorteio.numeroFinal)}</b> · {ganhadores[i]!.nome}</p><Button variant="ghost" size="icon" className="h-6 w-6 text-zinc-400 hover:text-red-400" onClick={() => limparGanhador(i)} title="Limpar ganhador"><RotateCcw className="w-3 h-3" /></Button></div>}
         </div>
-        <div className="space-y-2"><Label htmlFor={`manual-${i}`}>Entrada manual (Loteria Federal / globo)</Label><div className="flex gap-2"><Input id={`manual-${i}`} type="number" value={entrada[i]} onChange={(e) => setEntrada((v) => v.map((x, j) => j === i ? e.target.value : x))} placeholder="Número vendido" /><Button variant="secondary" onClick={() => usarEntrada(i)}>Identificar</Button></div>{Number(entrada[i]) > 0 && vencedorDe(Number(entrada[i])) && <p className="text-xs text-muted-foreground">Comprador: {vencedorDe(Number(entrada[i]))?.nome}</p>}</div>
+        {ganhadores[i] ? (
+          <div className="space-y-2">
+            <Label>Números adquiridos pelo participante</Label>
+            <div className="flex flex-wrap gap-1.5 rounded-md border border-input bg-background/50 px-3 py-2 min-h-10">
+              {numerosDoParticipante(ganhadores[i]!.num).map((n) => n === ganhadores[i]!.num
+                ? <span key={n} className="font-extrabold text-emerald-300 px-1.5 rounded bg-emerald-500/15 border border-emerald-500/40">★ {padNum(n, sorteio.numeroFinal)}</span>
+                : <span key={n} className="text-muted-foreground px-1.5">{padNum(n, sorteio.numeroFinal)}</span>)}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2"><Label htmlFor={`manual-${i}`}>Ou digite o número sorteado e pressione Enter</Label><Input id={`manual-${i}`} type="number" inputMode="numeric" enterKeyHint="done" value={entrada[i]} onChange={(e) => setEntrada((v) => v.map((x, j) => j === i ? e.target.value : x))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); usarEntrada(i); } }} onBlur={() => { if (entrada[i]) usarEntrada(i); }} placeholder="Número vendido" />{Number(entrada[i]) > 0 && vencedorDe(Number(entrada[i])) && <p className="text-xs text-muted-foreground">Comprador: {vencedorDe(Number(entrada[i]))?.nome}</p>}</div>
+        )}
       </section>)}
       <Button className="w-full" disabled={salvando || !ganhadores[0] || sorteio.status === 'encerrado'} onClick={homologar}><Trophy className="w-4 h-4 mr-2" />{salvando ? 'Salvando…' : 'Homologar e Salvar Ganhadores'}</Button>
       {sorteio.status === 'encerrado' && <p className="text-center text-sm text-muted-foreground">Este sorteio já está encerrado.</p>}
