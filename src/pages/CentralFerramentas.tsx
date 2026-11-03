@@ -10,7 +10,7 @@ const CentralFerramentas = () => {
 
   const tools = [
     { title: 'Chat Inteligente', desc: 'Acesse o chat e continue suas conversas.', icon: MessageCircle, color: 'green', path: '/chat', badge: unreadCount },
-    { title: 'Urna CIPA', desc: 'Gerencie eleições da CIPA e organize a votação dos colaboradores.', icon: Vote, color: 'cyan', path: '/ferramentas/urna-cipa', badge: 0 },
+    { title: 'Eleições & Votações', desc: 'Crie eleições flexíveis (CIPA, Destaque, Líderes) com urna digital e apuração em tempo real.', icon: Vote, color: 'cyan', path: '/ferramentas/eleicoes', badge: 0 },
     { title: 'Sorteios & Prêmios', desc: 'Organize sorteios de brindes, números e prêmios para seus eventos.', icon: Gift, color: 'orange', path: '/ferramentas/sorteios', badge: 0 },
   ];
 

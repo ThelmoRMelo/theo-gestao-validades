@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
 import { AnimatePresence } from "framer-motion";
 import SplashScreen from "@/components/SplashScreen";
@@ -23,11 +23,15 @@ import LancarVenda from "./pages/LancarVenda";
 import DashboardMetas from "./pages/DashboardMetas";
 import NotFound from "./pages/NotFound";
 import CentralFerramentas from "./pages/CentralFerramentas";
-import ModuloEmPreparacao from "./pages/ModuloEmPreparacao";
 import SorteiosConfig from "./pages/SorteiosConfig";
 import SorteioVendas from "./pages/SorteioVendas";
 import SorteioApuracao from "./pages/SorteioApuracao";
 import SorteioPublico from "./pages/SorteioPublico";
+import EleicoesConfig from "./pages/EleicoesConfig";
+import EleicaoMesario from "./pages/EleicaoMesario";
+import EleicaoUrna from "./pages/EleicaoUrna";
+import EleicaoApuracao from "./pages/EleicaoApuracao";
+import EleicaoPublica from "./pages/EleicaoPublica";
 
 const queryClient = new QueryClient();
 
@@ -77,7 +81,12 @@ const App = () => {
                 <Route path="/lancar-venda" element={<LancarVenda />} />
                 <Route path="/metas" element={<DashboardMetas />} />
                 <Route path="/ferramentas" element={<CentralFerramentas />} />
-                <Route path="/ferramentas/urna-cipa" element={<ModuloEmPreparacao variant="urna" />} />
+                <Route path="/ferramentas/urna-cipa" element={<Navigate to="/ferramentas/eleicoes" replace />} />
+                <Route path="/ferramentas/eleicoes" element={<EleicoesConfig />} />
+                <Route path="/ferramentas/eleicoes/:id/mesario" element={<EleicaoMesario />} />
+                <Route path="/ferramentas/eleicoes/:id/urna" element={<EleicaoUrna />} />
+                <Route path="/ferramentas/eleicoes/:id/apuracao" element={<EleicaoApuracao />} />
+                <Route path="/eleicao/:id" element={<EleicaoPublica />} />
                 <Route path="/ferramentas/sorteios" element={<SorteiosConfig />} />
                 <Route path="/sorteio/:id" element={<SorteioPublico />} />
                 <Route path="/ferramentas/sorteios/:id/vendas" element={<SorteioVendas />} />

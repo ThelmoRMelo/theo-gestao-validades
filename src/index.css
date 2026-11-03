@@ -2,6 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes election-confetti-fall {
+  0% { transform: translateY(-8vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(78vh) rotate(540deg); opacity: 0; }
+}
+
+.election-confetti {
+  position: absolute;
+  top: -1rem;
+  width: .5rem;
+  height: .75rem;
+  border-radius: 2px;
+  animation: election-confetti-fall 2.8s ease-in 1 both;
+}
+
+@media print {
+  .print-report,
+  .print-report * {
+    color: #111 !important;
+    background-color: #fff !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .print-report article,
+  .print-report section {
+    border-color: #aaa !important;
+    break-inside: avoid;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════
    GESTÃO DE VALIDADES - DESIGN SYSTEM FUTURISTA
    Tema: Future_Design (Padrão)
