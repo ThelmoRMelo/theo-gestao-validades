@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Share2, Trophy, Users, Vote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { apurarResultados, Candidato, Eleicao, listarCandidatos, obterEleicao, ResultadoItem, STATUS_LABEL, TIPO_LABEL } from '@/lib/eleicoes';
+import { apurarResultados, Candidato, Eleicao, getShareUrl, listarCandidatos, obterEleicao, ResultadoItem, STATUS_LABEL, TIPO_LABEL } from '@/lib/eleicoes';
 
 export default function EleicaoPublica() {
   const { id = '' } = useParams();
@@ -23,7 +23,9 @@ export default function EleicaoPublica() {
 
   const sortedResults = useMemo(() => [...resultados].filter((r) => r.candidatoId).sort((a, b) => b.votos - a.votos), [resultados]);
   const share = async () => {
-    const message = `Conheça os candidatos de ${eleicao?.titulo}: ${location.href}`;
+    if (!eleicao) return;
+    const shareUrl = getShareUrl(eleicao.id, eleicao.imagemUrl);
+    const message = `Conheça os candidatos de ${eleicao.titulo}: ${shareUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
   };
 

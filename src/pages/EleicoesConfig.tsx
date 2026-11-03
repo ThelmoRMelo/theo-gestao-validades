@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Copy, ExternalLink, Plus, Trash2, Users, Vote, BarChart3, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink, Plus, Trash2, Users, Vote, BarChart3, ClipboardList, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Candidato, Eleicao, EleicaoStatus, EleicaoTipo, STATUS_LABEL, TIPO_LABEL, eleicaoSchema, excluirCandidato, excluirEleicao, listarCandidatos, listarEleicoes, obterEleicao, salvarCandidato, salvarEleicao, uploadImagemEleicao } from '@/lib/eleicoes';
+import { Candidato, Eleicao, EleicaoStatus, EleicaoTipo, STATUS_LABEL, TIPO_LABEL, eleicaoSchema, excluirCandidato, excluirEleicao, getShareUrl, listarCandidatos, listarEleicoes, obterEleicao, salvarCandidato, salvarEleicao, uploadImagemEleicao } from '@/lib/eleicoes';
 
 const vazio = (): Partial<Eleicao> & { titulo: string } => ({ titulo: '', descricao: '', tipo: 'geral', regras: '', status: 'preparacao', permitirEleitorAvulso: true, permitirVotoBranco: true });
 
@@ -20,11 +20,17 @@ export default function EleicoesConfig() {
   const [candidate, setCandidate] = useState<Partial<Candidato> & { nome: string; numero: number }>({ nome: '', numero: 1, cargo: '', setor: '', descricao: '', ordem: 0 });
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [bannerPreviewLocal, setBannerPreviewLocal] = useState<string | null>(null);
+  const [fotoPreviewLocal, setFotoPreviewLocal] = useState<string | null>(null);
+
+  useEffect(() => () => { if (bannerPreviewLocal?.startsWith('blob:')) URL.revokeObjectURL(bannerPreviewLocal); }, [bannerPreviewLocal]);
+  useEffect(() => () => { if (fotoPreviewLocal?.startsWith('blob:')) URL.revokeObjectURL(fotoPreviewLocal); }, [fotoPreviewLocal]);
 
   const refresh = async () => { try { setEleicoes(await listarEleicoes()); } catch (e) { toast.error(e instanceof Error ? e.message : 'Falha ao carregar eleições.'); } };
   useEffect(() => { void refresh(); }, []);
   const set = <K extends keyof Eleicao>(key: K, value: Eleicao[K]) => setForm((current) => current ? { ...current, [key]: value } : current);
-  const abrirEdicao = async (eleicao: Eleicao) => { setForm({ ...eleicao }); setCandidate({ nome: '', numero: 1, cargo: '', setor: '', descricao: '', ordem: 0 }); try { setCandidatos(await listarCandidatos(eleicao.id)); } catch { toast.error('Falha ao carregar candidatos.'); } };
+  const abrirEdicao = async (eleicao: Eleicao) => { setBannerPreviewLocal(null); setFotoPreviewLocal(null); setForm({ ...eleicao }); setCandidate({ nome: '', numero: 1, cargo: '', setor: '', descricao: '', ordem: 0 }); try { setCandidatos(await listarCandidatos(eleicao.id)); } catch { toast.error('Falha ao carregar candidatos.'); } };
+  const fecharFormulario = () => { setBannerPreviewLocal(null); setFotoPreviewLocal(null); setForm(null); };
 
   const salvar = async () => {
     if (!form) return;
@@ -48,7 +54,7 @@ export default function EleicoesConfig() {
       if (target === 'banner') set('imagemUrl', url);
       else setCandidate((current) => ({ ...current, fotoUrl: url }));
       toast.success('Imagem otimizada e enviada.');
-    } catch (e) { toast.error(e instanceof Error ? e.message : 'Falha no upload da imagem.'); }
+    } catch (e) { if (target === 'banner') setBannerPreviewLocal(null); else setFotoPreviewLocal(null); toast.error(e instanceof Error ? e.message : 'Falha no upload da imagem.'); }
     finally { setUploading(false); }
   };
 
@@ -59,19 +65,20 @@ export default function EleicoesConfig() {
       await salvarCandidato({ ...candidate, eleicaoId: form.id, nome: candidate.nome.trim(), numero: Number(candidate.numero) });
       setCandidatos(await listarCandidatos(form.id));
       setCandidate({ nome: '', numero: 1, cargo: '', setor: '', descricao: '', ordem: 0 });
+      setFotoPreviewLocal(null);
       toast.success('Candidato salvo.');
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Não foi possível salvar candidato.'); }
   };
 
   return <main className="min-h-screen px-4 pb-10 text-foreground">
     <header className="header-gradient mb-6 flex items-center gap-4 rounded-b-2xl px-4 py-5">
-      <button onClick={() => form ? setForm(null) : navigate('/ferramentas')} className="grid size-10 place-items-center rounded-xl bg-primary-foreground/20" aria-label="Voltar"><ArrowLeft className="size-5" /></button>
+      <button onClick={() => form ? fecharFormulario() : navigate('/ferramentas')} className="grid size-10 place-items-center rounded-xl bg-primary-foreground/20" aria-label="Voltar"><ArrowLeft className="size-5" /></button>
       <div><h1 className="font-display text-xl font-bold">Eleições & Votações</h1><p className="text-sm opacity-80">Configure eleições, candidatos e acompanhe a votação.</p></div>
     </header>
 
     <section className="mx-auto max-w-4xl space-y-4">
       {!form ? <>
-        <Button className="w-full" onClick={() => { setForm(vazio()); setCandidatos([]); }}><Plus className="mr-2 size-4" /> Nova eleição</Button>
+        <Button className="w-full" onClick={() => { setBannerPreviewLocal(null); setFotoPreviewLocal(null); setForm(vazio()); setCandidatos([]); }}><Plus className="mr-2 size-4" /> Nova eleição</Button>
         {!eleicoes.length && <p className="py-12 text-center text-muted-foreground">Nenhuma eleição cadastrada.</p>}
         {eleicoes.map((e) => <article key={e.id} className="rounded-2xl border border-cyan/30 bg-card p-4 shadow-[0_0_20px_hsl(var(--cyan)/.08)]">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -84,7 +91,8 @@ export default function EleicoesConfig() {
             <Button size="sm" onClick={() => navigate(`/ferramentas/eleicoes/${e.id}/mesario`)}><Users className="mr-1 size-4" /> Mesário</Button>
             <Button size="sm" onClick={() => navigate(`/ferramentas/eleicoes/${e.id}/urna`)}><Vote className="mr-1 size-4" /> Urna</Button>
             <Button size="sm" onClick={() => navigate(`/ferramentas/eleicoes/${e.id}/apuracao`)}><BarChart3 className="mr-1 size-4" /> Apuração</Button>
-            <Button size="sm" variant="secondary" onClick={() => { void navigator.clipboard.writeText(`${location.origin}/eleicao/${e.id}`); toast.success('Link público copiado.'); }}><Copy className="mr-1 size-4" /> Link público</Button>
+            <Button size="sm" variant="secondary" onClick={() => { const shareUrl = getShareUrl(e.id, e.imagemUrl); void navigator.clipboard.writeText(shareUrl); toast.success('Link para WhatsApp copiado!'); }}><Copy className="mr-1 size-4" /> Copiar link</Button>
+            <Button size="sm" variant="secondary" onClick={() => { const shareUrl = getShareUrl(e.id, e.imagemUrl); const msg = `Conheça os candidatos de ${e.titulo}: ${shareUrl}`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer'); }}><Share2 className="mr-1 size-4" /> WhatsApp</Button>
             <Button size="sm" variant="secondary" onClick={() => window.open(`/eleicao/${e.id}`, '_blank', 'noopener')}><ExternalLink className="mr-1 size-4" /> Vitrine</Button>
             <Button size="sm" variant="destructive" onClick={() => { if (confirm(`Excluir a eleição “${e.titulo}” e seus dados?`)) void excluirEleicao(e.id).then(refresh).then(() => toast.success('Eleição excluída.')).catch((err) => toast.error(err.message)); }}><Trash2 className="size-4" /></Button>
           </div>
@@ -95,28 +103,28 @@ export default function EleicoesConfig() {
         <div><Label>Tipo</Label><Select value={form.tipo ?? 'geral'} onValueChange={(v) => set('tipo', v as EleicaoTipo)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(TIPO_LABEL).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>
         <div><Label>Descrição</Label><Textarea value={form.descricao ?? ''} maxLength={2000} onChange={(e) => set('descricao', e.target.value)} /></div>
         <div><Label>Regras / Informações adicionais</Label><Textarea value={form.regras ?? ''} maxLength={4000} onChange={(e) => set('regras', e.target.value)} /></div>
-        <div className="space-y-2"><Label>Banner da eleição (JPEG otimizado até 1200 px / 300 KB)</Label><Input type="file" accept="image/*" disabled={uploading} onChange={(e) => { const file = e.currentTarget.files?.[0]; if (file) void enviarImagem(file, 'banner'); e.currentTarget.value = ''; }} />{form.imagemUrl && <img src={form.imagemUrl} alt="Prévia do banner" className="max-h-56 w-full rounded-xl object-cover" />}</div>
+        <div className="space-y-2"><Label>Banner da eleição (JPEG otimizado até 1200 px / 300 KB)</Label><Input type="file" accept="image/*" disabled={uploading} onChange={(e) => { const file = e.currentTarget.files?.[0]; if (file) { setBannerPreviewLocal(URL.createObjectURL(file)); void enviarImagem(file, 'banner'); } e.currentTarget.value = ''; }} />{(bannerPreviewLocal || form.imagemUrl) && <img src={bannerPreviewLocal || form.imagemUrl} alt="Prévia do banner" className="max-h-56 w-full rounded-xl object-cover" />}</div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex items-center justify-between gap-3 rounded-xl border p-3"><div><Label>Permitir eleitor avulso</Label><p className="text-xs text-muted-foreground">Cadastro no momento da votação</p></div><Switch checked={form.permitirEleitorAvulso ?? true} onCheckedChange={(v) => set('permitirEleitorAvulso', v)} /></div>
           <div className="flex items-center justify-between gap-3 rounded-xl border p-3"><div><Label>Permitir voto em branco</Label></div><Switch checked={form.permitirVotoBranco ?? true} onCheckedChange={(v) => set('permitirVotoBranco', v)} /></div>
         </div>
         <div><Label>Status</Label><Select disabled={form.status === 'encerrada'} value={form.status ?? 'preparacao'} onValueChange={(v) => set('status', v as EleicaoStatus)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(STATUS_LABEL).map(([v, l]) => <SelectItem key={v} value={v} disabled={v === 'encerrada' && form.status !== 'encerrada'}>{l}{v === 'encerrada' && form.status !== 'encerrada' ? ' (encerre pela apuração)' : ''}</SelectItem>)}</SelectContent></Select><p className="mt-1 text-xs text-muted-foreground">O encerramento oficial só pode ser feito na tela de apuração.</p></div>
-        <div className="flex gap-2"><Button variant="secondary" className="flex-1" onClick={() => setForm(null)}>Voltar</Button><Button className="flex-1" disabled={saving || uploading} onClick={() => void salvar()}>{saving ? 'Salvando…' : 'Salvar eleição'}</Button></div>
+        <div className="flex gap-2"><Button variant="secondary" className="flex-1" onClick={fecharFormulario}>Voltar</Button><Button className="flex-1" disabled={saving || uploading} onClick={() => void salvar()}>{saving ? 'Salvando…' : 'Salvar eleição'}</Button></div>
 
         {form.id && <section className="space-y-4 border-t border-border pt-5">
           <h3 className="font-display text-lg font-bold"><ClipboardList className="mr-2 inline size-5 text-cyan" />Candidatos oficiais</h3>
           <div className="grid gap-2 sm:grid-cols-2">{candidatos.map((c) => <div key={c.id} className="flex items-center gap-3 rounded-xl border p-3">
             {c.fotoUrl ? <img src={c.fotoUrl} alt={c.nome} className="size-14 rounded-full object-cover" /> : <div className="grid size-14 place-items-center rounded-full bg-secondary font-display text-xl text-cyan">{c.numero}</div>}
             <div className="min-w-0 flex-1"><p className="truncate font-semibold">{c.nome}</p><p className="text-xs text-muted-foreground">Nº {c.numero} · {[c.cargo, c.setor].filter(Boolean).join(' · ')}</p></div>
-            <Button size="icon" variant="ghost" onClick={() => setCandidate({ ...c })} aria-label={`Editar ${c.nome}`}>✎</Button>
+            <Button size="icon" variant="ghost" onClick={() => { setFotoPreviewLocal(null); setCandidate({ ...c }); }} aria-label={`Editar ${c.nome}`}>✎</Button>
             <Button size="icon" variant="destructive" onClick={() => { if (confirm(`Excluir ${c.nome}?`)) void excluirCandidato(c.id).then(() => listarCandidatos(form.id!).then(setCandidatos)).catch((err) => toast.error(err.message)); }} aria-label={`Excluir ${c.nome}`}><Trash2 className="size-4" /></Button>
           </div>)}</div>
           <div className="space-y-3 rounded-xl border border-cyan/20 p-4">
             <h4 className="font-semibold">{candidate.id ? 'Editar candidato' : 'Adicionar candidato'}</h4>
             <div className="grid gap-3 sm:grid-cols-2"><div><Label>Nome *</Label><Input value={candidate.nome} onChange={(e) => setCandidate({ ...candidate, nome: e.target.value })} /></div><div><Label>Número de votação *</Label><Input type="number" min="0" value={candidate.numero} onChange={(e) => setCandidate({ ...candidate, numero: Number(e.target.value) })} /></div><div><Label>Cargo</Label><Input value={candidate.cargo ?? ''} onChange={(e) => setCandidate({ ...candidate, cargo: e.target.value })} /></div><div><Label>Setor</Label><Input value={candidate.setor ?? ''} onChange={(e) => setCandidate({ ...candidate, setor: e.target.value })} /></div></div>
             <div><Label>Apresentação</Label><Textarea value={candidate.descricao ?? ''} onChange={(e) => setCandidate({ ...candidate, descricao: e.target.value })} /></div>
-            <div><Label>Foto</Label><Input type="file" accept="image/*" disabled={uploading} onChange={(e) => { const file = e.currentTarget.files?.[0]; if (file) void enviarImagem(file, 'foto'); e.currentTarget.value = ''; }} />{candidate.fotoUrl && <img src={candidate.fotoUrl} alt="Prévia da foto" className="mt-2 size-20 rounded-full object-cover" />}</div>
-            <div className="flex gap-2"><Button className="flex-1" disabled={uploading} onClick={() => void salvarCandidatoForm()}>{candidate.id ? 'Atualizar candidato' : 'Adicionar candidato'}</Button>{candidate.id && <Button variant="secondary" onClick={() => setCandidate({ nome: '', numero: 1, cargo: '', setor: '', descricao: '', ordem: 0 })}>Cancelar edição</Button>}</div>
+            <div><Label>Foto</Label><Input type="file" accept="image/*" disabled={uploading} onChange={(e) => { const file = e.currentTarget.files?.[0]; if (file) { setFotoPreviewLocal(URL.createObjectURL(file)); void enviarImagem(file, 'foto'); } e.currentTarget.value = ''; }} />{(fotoPreviewLocal || candidate.fotoUrl) && <img src={fotoPreviewLocal || candidate.fotoUrl} alt="Prévia da foto" className="mt-2 size-20 rounded-full object-cover" />}</div>
+            <div className="flex gap-2"><Button className="flex-1" disabled={uploading} onClick={() => void salvarCandidatoForm()}>{candidate.id ? 'Atualizar candidato' : 'Adicionar candidato'}</Button>{candidate.id && <Button variant="secondary" onClick={() => { setFotoPreviewLocal(null); setCandidate({ nome: '', numero: 1, cargo: '', setor: '', descricao: '', ordem: 0 }); }}>Cancelar edição</Button>}</div>
           </div>
         </section>}
       </div>}

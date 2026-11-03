@@ -81,6 +81,14 @@ export async function comprimirImagem(file: File, maxDim = 1200, maxKb = 300): P
 }
 
 const BUCKET = 'eleicoes';
+const PREVIEW_URL = 'https://svbocyguwvhkljzenlnb.supabase.co/functions/v1/eleicao-preview';
+const versao = (imagemUrl?: string) => (imagemUrl ? (imagemUrl.split('/').pop() ?? '').split('.')[0].slice(0, 8) : '');
+
+export const getShareUrl = (id: string, imagemUrl?: string) => {
+  const v = versao(imagemUrl);
+  return `${PREVIEW_URL}?id=${encodeURIComponent(id)}${v ? `&v=${encodeURIComponent(v)}` : ''}`;
+};
+
 /** Extrai o caminho no armazenamento a partir de um link antigo (público/assinado) ou caminho puro. */
 export const caminhoImagem = (v?: string | null) => {
   if (!v) return undefined;
@@ -159,11 +167,24 @@ const mapEleitor = (e: any): Eleitor => ({
 
 export async function listarEleicoes(): Promise<Eleicao[]> {
   const { data, error } = await supabase.from('eleicoes').select('*').order('created_at', { ascending: false });
-  if (error) throw error; return (data ?? []).map(mapEleicao);
+  if (error) throw error;
+  const lista = (data ?? []).map(mapEleicao);
+  const caminhos = lista.map((e) => caminhoImagem(e.imagemUrl)).filter(Boolean);
+  const mapa = await assinar(caminhos);
+  return lista.map((e) => {
+    const c = caminhoImagem(e.imagemUrl);
+    return { ...e, imagemUrl: c ? exibir(c, mapa) ?? e.imagemUrl : undefined };
+  });
 }
 export async function obterEleicao(id: string): Promise<Eleicao | null> {
   const { data, error } = await supabase.from('eleicoes').select('*').eq('id', id).maybeSingle();
-  if (error) throw error; return data ? mapEleicao(data) : null;
+  if (error) throw error;
+  if (!data) return null;
+  const eleicao = mapEleicao(data);
+  const caminho = caminhoImagem(eleicao.imagemUrl);
+  if (!caminho) return eleicao;
+  const mapa = await assinar([caminho]);
+  return { ...eleicao, imagemUrl: exibir(caminho, mapa) ?? eleicao.imagemUrl };
 }
 export async function salvarEleicao(e: Partial<Eleicao> & { titulo: string }): Promise<string> {
   const payload = {
@@ -179,7 +200,14 @@ export async function excluirEleicao(id: string) { const { error } = await supab
 
 export async function listarCandidatos(eleicaoId: string): Promise<Candidato[]> {
   const { data, error } = await supabase.from('eleicao_candidatos').select('*').eq('eleicao_id', eleicaoId).order('numero');
-  if (error) throw error; return (data ?? []).map(mapCandidato);
+  if (error) throw error;
+  const lista = (data ?? []).map(mapCandidato);
+  const caminhos = lista.map((c) => caminhoImagem(c.fotoUrl)).filter(Boolean);
+  const mapa = await assinar(caminhos);
+  return lista.map((c) => {
+    const caminho = caminhoImagem(c.fotoUrl);
+    return { ...c, fotoUrl: caminho ? exibir(caminho, mapa) ?? c.fotoUrl : undefined };
+  });
 }
 export async function salvarCandidato(c: Partial<Candidato> & { eleicaoId: string; numero: number; nome: string }) {
   const payload = { eleicao_id: c.eleicaoId, numero: c.numero, nome: c.nome, cargo: c.cargo ?? '', setor: c.setor ?? '', descricao: c.descricao ?? '', foto_url: c.fotoUrl ?? null, ordem: c.ordem ?? 0 };
