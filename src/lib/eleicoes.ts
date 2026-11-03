@@ -43,49 +43,72 @@ export const eleicaoSchema = z.object({
   permitirVotoBranco: z.boolean().default(true),
 });
 
-export async function comprimirImagem(file: File, maxDim = 1200, maxKb = 300): Promise<Blob> {
-  const url = URL.createObjectURL(file);
-  const img = new Image();
+// Converte qualquer imagem (PNG, WEBP, HEIC suportado pelo navegador, JPEG...) em JPEG leve.
+async function abrirImagem(file: File): Promise<{ src: CanvasImageSource; w: number; h: number; close: () => void }> {
   try {
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = () => reject(new Error('Não foi possível abrir esta imagem.'));
-      img.src = url;
-    });
-  } finally { URL.revokeObjectURL(url); }
-
-  let width = img.naturalWidth;
-  let height = img.naturalHeight;
-  const ratio = Math.min(1, maxDim / Math.max(width, height));
-  width = Math.max(1, Math.round(width * ratio));
-  height = Math.max(1, Math.round(height * ratio));
+    const bmp = await createImageBitmap(file);
+    return { src: bmp, w: bmp.width, h: bmp.height, close: () => bmp.close?.() };
+  } catch {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    await new Promise<void>((ok, fail) => { img.onload = () => ok(); img.onerror = () => fail(new Error('Formato de imagem não suportado neste aparelho.')); img.src = url; });
+    return { src: img, w: img.naturalWidth, h: img.naturalHeight, close: () => URL.revokeObjectURL(url) };
+  }
+}
+export async function comprimirImagem(file: File, maxDim = 1200, maxKb = 300): Promise<Blob> {
+  if (!file.type.startsWith('image/') && !/\.(heic|heif|jpe?g|png|webp|gif|bmp)$/i.test(file.name)) throw new Error('Selecione um arquivo de imagem.');
+  const im = await abrirImagem(file);
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Seu navegador não conseguiu processar a imagem.');
+  if (!ctx) { im.close(); throw new Error('Seu navegador não conseguiu processar a imagem.'); }
   const limite = maxKb * 1024;
-  for (let escala = 1; escala >= 0.35; escala *= 0.85) {
-    canvas.width = Math.max(1, Math.round(width * escala));
-    canvas.height = Math.max(1, Math.round(height * escala));
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    for (let qualidade = 0.86; qualidade >= 0.4; qualidade -= 0.1) {
-      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', qualidade));
-      if (blob && blob.size <= limite) return blob;
+  let ultimo: Blob | null = null;
+  try {
+    const base = Math.min(1, maxDim / Math.max(im.w, im.h));
+    for (let escala = base; escala >= base * 0.4; escala *= 0.8) {
+      canvas.width = Math.max(1, Math.round(im.w * escala));
+      canvas.height = Math.max(1, Math.round(im.h * escala));
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(im.src, 0, 0, canvas.width, canvas.height);
+      for (const q of [0.85, 0.72, 0.6, 0.5]) {
+        const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', q));
+        if (blob) { ultimo = blob; if (blob.size <= limite) return blob; }
+      }
     }
-  }
-  throw new Error(`A imagem não pôde ser reduzida para menos de ${maxKb} KB.`);
+  } finally { im.close(); }
+  if (ultimo) return ultimo;
+  throw new Error('Não foi possível converter a imagem.');
 }
 
+const BUCKET = 'eleicoes';
+/** Extrai o caminho no armazenamento a partir de um link antigo (público/assinado) ou caminho puro. */
+export const caminhoImagem = (v?: string | null) => {
+  if (!v) return undefined;
+  if (v.startsWith('blob:')) return undefined;
+  const m = v.match(/\/object\/(?:public|sign)\/eleicoes\/([^?]+)/);
+  return m ? decodeURIComponent(m[1]) : v;
+};
+const cacheAssinado = new Map<string, string>();
+/** Gera links assinados (válidos por 1 ano) para exibir imagens do armazenamento privado. */
+async function assinar(caminhos: (string | undefined)[]): Promise<Map<string, string>> {
+  const faltam = [...new Set(caminhos.filter((c): c is string => !!c && !/^https?:/.test(c) && !cacheAssinado.has(c)))];
+  if (faltam.length) {
+    const { data } = await supabase.storage.from(BUCKET).createSignedUrls(faltam, 60 * 60 * 24 * 365);
+    (data ?? []).forEach((d) => { if (d.path && d.signedUrl) cacheAssinado.set(d.path, d.signedUrl); });
+  }
+  return cacheAssinado;
+}
+const exibir = (c: string | undefined, mapa: Map<string, string>) => (c ? mapa.get(c) ?? (/^https?:/.test(c) ? c : undefined) : undefined);
+
 export async function uploadImagemEleicao(file: File, pasta = 'banners'): Promise<string> {
-  const blob = await comprimirImagem(file);
+  const blob = pasta === 'candidatos' ? await comprimirImagem(file, 600, 120) : await comprimirImagem(file, 1200, 300);
   const nomeArquivo = `${pasta}/${crypto.randomUUID()}.jpg`;
-  const { error } = await supabase.storage.from('eleicoes').upload(nomeArquivo, blob, {
-    contentType: 'image/jpeg', cacheControl: '3600', upsert: false,
+  const { error } = await supabase.storage.from(BUCKET).upload(nomeArquivo, blob, {
+    contentType: 'image/jpeg', cacheControl: '31536000', upsert: false,
   });
   if (error) throw error;
-  return supabase.storage.from('eleicoes').getPublicUrl(nomeArquivo).data.publicUrl;
+  const mapa = await assinar([nomeArquivo]);
+  return mapa.get(nomeArquivo) ?? nomeArquivo;
 }
 
 let audioContext: AudioContext | null = null;

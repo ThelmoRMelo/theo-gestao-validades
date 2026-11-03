@@ -42,7 +42,9 @@ Deno.serve(async (req) => {
   // Entrega direta da imagem do banner
   if (wantImage) {
     if (!s.imagem_url) return new Response("no image", { status: 404, headers: corsHeaders });
-    const { data, error } = await sb.storage.from("eleicoes").download(s.imagem_url);
+    const m = String(s.imagem_url).match(/\/object\/(?:public|sign)\/eleicoes\/([^?]+)/);
+    const path = m ? decodeURIComponent(m[1]) : String(s.imagem_url);
+    const { data, error } = await sb.storage.from("eleicoes").download(path);
     if (error || !data) return new Response("not found", { status: 404, headers: corsHeaders });
     return new Response(data, {
       headers: {
