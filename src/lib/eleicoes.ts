@@ -208,9 +208,22 @@ export async function obterSessaoCabine(eleicaoId: string, cabine = ''): Promise
   if (error) throw error; return data as unknown as { eleitor_id: string; nome: string; funcao: string; habilitado_em: string } | null;
 }
 export async function computarVoto(eleitorId: string, candidatoId: string | null) {
-  // A RPC aceita NULL para voto branco; o tipo gerado atualmente declara string obrigatória.
-  const rpc = supabase.rpc as unknown as (name: string, args: { _eleitor_id: string; _candidato_id: string | null }) => Promise<{ error: { message: string } | null }>;
-  const { error } = await rpc('computar_voto', { _eleitor_id: eleitorId, _candidato_id: candidatoId }); if (error) throw new Error(error.message);
+  // A RPC aceita NULL para voto em branco.
+  // bind preserva o contexto interno do cliente Supabase.
+  const rpc = supabase.rpc.bind(supabase) as unknown as (
+    name: string,
+    args: {
+      _eleitor_id: string;
+      _candidato_id: string | null;
+    }
+  ) => Promise<{ error: { message: string } | null }>;
+
+  const { error } = await rpc('computar_voto', {
+    _eleitor_id: eleitorId,
+    _candidato_id: candidatoId,
+  });
+
+  if (error) throw new Error(error.message);
 }
 export async function apurarResultados(eleicaoId: string): Promise<ResultadoItem[]> {
   const { data, error } = await supabase.rpc('apurar_eleicao', { _eleicao_id: eleicaoId });
