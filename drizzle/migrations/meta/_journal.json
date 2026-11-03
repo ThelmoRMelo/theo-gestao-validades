@@ -36,6 +36,20 @@
       "when": 1793450421152,
       "tag": "0004_sorteio_reservas",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793719591509,
+      "tag": "0005_eleicoes_modulo",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793719602408,
+      "tag": "0006_eleicoes_storage_policies",
+      "breakpoints": true
     }
   ]
 }

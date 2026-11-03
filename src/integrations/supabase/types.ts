@@ -209,6 +209,193 @@ export type Database = {
           },
         ]
       }
+      eleicao_candidatos: {
+        Row: {
+          cargo: string
+          created_at: string
+          descricao: string
+          eleicao_id: string
+          foto_url: string | null
+          id: string
+          nome: string
+          numero: number
+          ordem: number
+          setor: string
+        }
+        Insert: {
+          cargo?: string
+          created_at?: string
+          descricao?: string
+          eleicao_id: string
+          foto_url?: string | null
+          id?: string
+          nome: string
+          numero: number
+          ordem?: number
+          setor?: string
+        }
+        Update: {
+          cargo?: string
+          created_at?: string
+          descricao?: string
+          eleicao_id?: string
+          foto_url?: string | null
+          id?: string
+          nome?: string
+          numero?: number
+          ordem?: number
+          setor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eleicao_candidatos_eleicao_id_fkey"
+            columns: ["eleicao_id"]
+            isOneToOne: false
+            referencedRelation: "eleicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eleicao_eleitores: {
+        Row: {
+          cabine: string
+          chave: string
+          created_at: string
+          eleicao_id: string
+          funcao: string
+          habilitado_em: string | null
+          id: string
+          matricula: string
+          nome: string
+          pre_cadastrado: boolean
+          status: string
+          votou_em: string | null
+        }
+        Insert: {
+          cabine?: string
+          chave?: string
+          created_at?: string
+          eleicao_id: string
+          funcao?: string
+          habilitado_em?: string | null
+          id?: string
+          matricula?: string
+          nome: string
+          pre_cadastrado?: boolean
+          status?: string
+          votou_em?: string | null
+        }
+        Update: {
+          cabine?: string
+          chave?: string
+          created_at?: string
+          eleicao_id?: string
+          funcao?: string
+          habilitado_em?: string | null
+          id?: string
+          matricula?: string
+          nome?: string
+          pre_cadastrado?: boolean
+          status?: string
+          votou_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eleicao_eleitores_eleicao_id_fkey"
+            columns: ["eleicao_id"]
+            isOneToOne: false
+            referencedRelation: "eleicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eleicao_votos: {
+        Row: {
+          candidato_id: string | null
+          eleicao_id: string
+          id: string
+          tipo: string
+        }
+        Insert: {
+          candidato_id?: string | null
+          eleicao_id: string
+          id?: string
+          tipo?: string
+        }
+        Update: {
+          candidato_id?: string | null
+          eleicao_id?: string
+          id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eleicao_votos_candidato_id_fkey"
+            columns: ["candidato_id"]
+            isOneToOne: false
+            referencedRelation: "eleicao_candidatos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eleicao_votos_eleicao_id_fkey"
+            columns: ["eleicao_id"]
+            isOneToOne: false
+            referencedRelation: "eleicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eleicoes: {
+        Row: {
+          created_at: string
+          data_fim: string | null
+          data_inicio: string | null
+          descricao: string
+          encerrada_em: string | null
+          id: string
+          imagem_url: string | null
+          permitir_eleitor_avulso: boolean
+          permitir_voto_branco: boolean
+          regras: string
+          status: string
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          descricao?: string
+          encerrada_em?: string | null
+          id?: string
+          imagem_url?: string | null
+          permitir_eleitor_avulso?: boolean
+          permitir_voto_branco?: boolean
+          regras?: string
+          status?: string
+          tipo?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          descricao?: string
+          encerrada_em?: string | null
+          id?: string
+          imagem_url?: string | null
+          permitir_eleitor_avulso?: boolean
+          permitir_voto_branco?: boolean
+          regras?: string
+          status?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       metas_mensais: {
         Row: {
           ano: number
@@ -644,6 +831,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apurar_eleicao: {
+        Args: { _eleicao_id: string }
+        Returns: {
+          candidato_id: string
+          nome: string
+          numero: number
+          votos: number
+        }[]
+      }
+      cancelar_habilitacao: {
+        Args: { _eleitor_id: string }
+        Returns: undefined
+      }
       check_user_role: {
         Args: {
           _local_user_id: string
@@ -651,6 +851,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      computar_voto: {
+        Args: { _candidato_id: string; _eleitor_id: string }
+        Returns: undefined
+      }
+      encerrar_eleicao: { Args: { _eleicao_id: string }; Returns: undefined }
+      habilitar_eleitor: {
+        Args: {
+          _cabine?: string
+          _eleicao_id: string
+          _funcao?: string
+          _matricula?: string
+          _nome: string
+        }
+        Returns: Json
+      }
+      normalizar_texto: { Args: { _t: string }; Returns: string }
       numeros_reservados: { Args: { _sorteio_id: string }; Returns: number[] }
       reservar_numeros: {
         Args: {
@@ -665,6 +881,10 @@ export type Database = {
       resolver_reserva: {
         Args: { _confirmar: boolean; _pedido_id: string }
         Returns: undefined
+      }
+      sessao_cabine: {
+        Args: { _cabine?: string; _eleicao_id: string }
+        Returns: Json
       }
     }
     Enums: {
