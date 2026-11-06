@@ -20,7 +20,7 @@ DAS INFORMAÇÕES DE PRODUTOS E SUAS VALIDADES COM USUÁRIO QUE DESEJAM EVITAR P
 
 ═══════════════════════════════════
 1️⃣ IDENTIFICAÇÃO DO USUÁRIO (UMA ÚNICA VEZ)
-════════════════════════════════════
+═══════════════════════════════════
 
 • A tela "Me Fala Quem Você É" deve aparecer APENAS UMA VEZ por dispositivo.
 • Após o primeiro preenchimento, os dados devem ser armazenados LOCALMENTE
