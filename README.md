@@ -18,7 +18,7 @@ uma chave primária e não será permitido duplicidade.
 OBJETIVO: COMPARTILHAMENTO E GARANTIR O CONTROLE FIEL
 DAS INFORMAÇÕES DE PRODUTOS E SUAS VALIDADES COM USUÁRIO QUE DESEJAM EVITAR PERCAS
 
-════════════════════════════════════
+═══════════════════════════════════
 1️⃣ IDENTIFICAÇÃO DO USUÁRIO (UMA ÚNICA VEZ)
 ════════════════════════════════════
 
