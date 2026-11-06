@@ -32,6 +32,7 @@ import EleicaoMesario from "./pages/EleicaoMesario";
 import EleicaoUrna from "./pages/EleicaoUrna";
 import EleicaoApuracao from "./pages/EleicaoApuracao";
 import EleicaoPublica from "./pages/EleicaoPublica";
+import ModuloEmPreparacao from "./pages/ModuloEmPreparacao";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ const App = () => {
                 <Route path="/ferramentas" element={<CentralFerramentas />} />
                 <Route path="/ferramentas/urna-cipa" element={<Navigate to="/ferramentas/eleicoes" replace />} />
                 <Route path="/ferramentas/eleicoes" element={<EleicoesConfig />} />
+                <Route path="/ferramentas/gestao-metas" element={<ModuloEmPreparacao variant="metas" />} />
                 <Route path="/ferramentas/eleicoes/:id/mesario" element={<EleicaoMesario />} />
                 <Route path="/ferramentas/eleicoes/:id/urna" element={<EleicaoUrna />} />
                 <Route path="/ferramentas/eleicoes/:id/apuracao" element={<EleicaoApuracao />} />

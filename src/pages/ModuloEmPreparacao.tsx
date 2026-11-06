@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Vote, Gift, Clock } from 'lucide-react';
+import { ArrowLeft, Vote, Gift, Clock, Target, ShoppingCart, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Props {
-  variant: 'urna' | 'sorteios';
+  variant: 'urna' | 'sorteios' | 'metas';
 }
 
 const content = {
@@ -17,6 +18,12 @@ const content = {
     icon: Gift,
     color: 'orange',
     desc: 'Módulo destinado à organização de sorteios de brindes, números da sorte e prêmios para eventos da equipe.',
+  },
+  metas: {
+    title: 'Gestão de Metas',
+    icon: Target,
+    color: 'yellow',
+    desc: 'Configure metas mensais, distribua por setores e acompanhe as vendas.',
   },
 };
 
@@ -37,17 +44,38 @@ const ModuloEmPreparacao = ({ variant }: Props) => {
       </header>
 
       <div className="px-4 max-w-xl mx-auto">
-        <div className="glass-card rounded-xl p-6 flex flex-col items-center text-center gap-4">
-          <div className={`w-20 h-20 rounded-full border-2 border-${color} flex items-center justify-center`}>
-            <Icon className={`w-10 h-10 text-${color}`} />
+        {variant === 'metas' ? (
+          <div className="glass-card p-4">
+            <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+              <Target className="w-5 h-5 text-yellow" />
+              Gestão de Metas
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">{desc}</p>
+            <div className="space-y-2">
+              <Button onClick={() => navigate('/gestao-metas')} className="w-full btn-secondary">
+                <Target className="w-4 h-4 mr-2" /> Configurar Metas
+              </Button>
+              <Button onClick={() => navigate('/lancar-venda')} className="w-full btn-secondary">
+                <ShoppingCart className="w-4 h-4 mr-2" /> Lançar Venda
+              </Button>
+              <Button onClick={() => window.open('/metas', '_blank')} variant="outline" className="w-full">
+                <ChevronRight className="w-4 h-4 mr-2" /> Abrir Dashboard de Metas
+              </Button>
+            </div>
           </div>
-          <h2 className="font-display text-lg font-bold text-foreground">{title}</h2>
-          <p className="text-sm text-muted-foreground">{desc}</p>
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-yellow text-yellow text-xs font-medium">
-            <Clock className="w-3 h-3" />
-            Módulo em preparação
-          </span>
-        </div>
+        ) : (
+          <div className="glass-card rounded-xl p-6 flex flex-col items-center text-center gap-4">
+            <div className={`w-20 h-20 rounded-full border-2 border-${color} flex items-center justify-center`}>
+              <Icon className={`w-10 h-10 text-${color}`} />
+            </div>
+            <h2 className="font-display text-lg font-bold text-foreground">{title}</h2>
+            <p className="text-sm text-muted-foreground">{desc}</p>
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-yellow text-yellow text-xs font-medium">
+              <Clock className="w-3 h-3" />
+              Módulo em preparação
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

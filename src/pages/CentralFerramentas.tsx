@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Wrench, MessageCircle, Vote, Gift } from 'lucide-react';
+import { ArrowLeft, Wrench, MessageCircle, Vote, Gift, Target } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useChatUnread } from '@/hooks/useChatUnread';
 
@@ -12,6 +12,7 @@ const CentralFerramentas = () => {
     { title: 'Chat Inteligente', desc: 'Acesse o chat e continue suas conversas.', icon: MessageCircle, color: 'green', path: '/chat', badge: unreadCount },
     { title: 'Eleições & Votações', desc: 'Crie eleições flexíveis (CIPA, Destaque, Líderes) com urna digital e apuração em tempo real.', icon: Vote, color: 'cyan', path: '/ferramentas/eleicoes', badge: 0 },
     { title: 'Sorteios & Prêmios', desc: 'Organize sorteios de brindes, números e prêmios para seus eventos.', icon: Gift, color: 'orange', path: '/ferramentas/sorteios', badge: 0 },
+    { title: 'Gestão de Metas', desc: 'Configure metas, lance vendas e acompanhe resultados.', icon: Target, color: 'yellow', path: '/ferramentas/gestao-metas', badge: 0 },
   ];
 
   return (
@@ -26,7 +27,7 @@ const CentralFerramentas = () => {
             Central de Ferramentas
           </h1>
           <p className="text-primary-foreground/80 text-sm">
-            Encontre aqui as ferramentas disponíveis para comunicação, eleições e sorteios.
+            Encontre aqui as ferramentas disponíveis para comunicação, eleições, sorteios e metas.
           </p>
         </div>
       </header>
